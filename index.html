@@ -50,8 +50,8 @@
                 <div>
                     <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Select Role / Account</label>
                     <select id="loginRole" onchange="toggleLoginInputs()" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium">
-                        <option value="admin">Admin (Mr. Moayed Alkhliefat)</option>
-                        <option value="teacher">Teacher Account</option>
+                        <option value="admin">Admin (Mr. Moayed Alkhliefat - View All)</option>
+                        <option value="teacher">Teacher Account (Separate Student Records)</option>
                     </select>
                 </div>
 
@@ -86,7 +86,7 @@
                 <div>
                     <h1 class="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
                         <span>ATS-AQB Student Follow-Up</span>
-                        <span class="text-xs px-2.5 py-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full font-bold shadow-sm">Science Dept</span>
+                        <span id="navRoleBadge" class="text-xs px-2.5 py-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full font-bold shadow-sm">Science Dept</span>
                     </h1>
                     <p class="text-xs text-slate-500 font-medium">Builder & Science Teacher: <span class="font-bold text-fuchsia-700">Mr. Moayed Alkhliefat</span></p>
                 </div>
@@ -459,7 +459,7 @@
         let supabaseClient = null;
         let students = [];
         let teachers = [];
-        let categories = []; // [{ id, name }]
+        let categories = []; // [{ id, name, teacherId }]
         let studentMarks = {}; // { studentId: { categoryId: mark } }
         let currentUser = null;
 
@@ -545,12 +545,15 @@
         function applyUserPermissions() {
             const badge = document.getElementById('currentUserBadge');
             const tabTeachersBtn = document.getElementById('tabTeachersBtn');
+            const roleBadge = document.getElementById('navRoleBadge');
 
             if (currentUser.role === 'admin') {
-                badge.textContent = 'Admin: Mr. Moayed Alkhliefat';
+                badge.textContent = 'Admin: Mr. Moayed';
+                roleBadge.textContent = 'Admin View (All)';
                 tabTeachersBtn.classList.remove('hidden');
             } else {
                 badge.textContent = `Teacher: ${currentUser.name}`;
+                roleBadge.textContent = `${currentUser.subject} Dept`;
                 tabTeachersBtn.classList.add('hidden');
                 switchTab('students');
             }
@@ -559,7 +562,7 @@
         function logout() {
             localStorage.removeItem('ats_aqb_session');
             currentUser = null;
-            document.getElementById('loginModal').classList.remove('hidden');
+            document.getElementById('loginModal').classList.add('hidden');
         }
 
         function switchTab(tab) {
@@ -603,7 +606,7 @@
             }
         }
 
-        // Excel / CSV Upload Handling
+        // Excel / CSV Upload Handling (tagged with current teacher if teacher logged in)
         function handleExcelUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -622,20 +625,18 @@
                         return;
                     }
 
-                    // Detect headers (row 0)
                     const headers = jsonRows[0].map(h => h ? h.toString().toLowerCase().trim() : '');
-                    
-                    // Find indices for Name, ID, Grade, Section
                     let nameIdx = headers.findIndex(h => h.includes('name') || h.includes('student'));
                     let idIdx = headers.findIndex(h => h.includes('id') || h.includes('number'));
                     let gradeIdx = headers.findIndex(h => h.includes('grade') || h.includes('class') || h.includes('level'));
                     let sectionIdx = headers.findIndex(h => h.includes('section') || h.includes('group') || h.includes('div'));
 
-                    // Fallback default column indices if headers aren't explicitly recognized
                     if (nameIdx === -1) nameIdx = 0;
                     if (idIdx === -1) idIdx = 1;
                     if (gradeIdx === -1) gradeIdx = 2;
                     if (sectionIdx === -1) sectionIdx = 3;
+
+                    const ownerTag = (currentUser && currentUser.role === 'teacher') ? currentUser.username : 'admin';
 
                     let addedCount = 0;
                     for (let i = 1; i < jsonRows.length; i++) {
@@ -654,7 +655,7 @@
                             position: `${grade} | ${section}`,
                             status: 'Enrolled',
                             resume_url: studentId,
-                            notes: 'Imported via Excel/CSV spreadsheet.'
+                            notes: `Imported via Excel/CSV | Teacher: ${ownerTag}`
                         };
 
                         if (supabaseClient) {
@@ -669,7 +670,8 @@
                                 status: 'Enrolled',
                                 email: '',
                                 phone: '',
-                                notes: 'Imported via Excel/CSV.',
+                                notes: `Imported via Excel/CSV.`,
+                                teacher: ownerTag,
                                 created_at: new Date().toISOString()
                             });
                         }
@@ -678,12 +680,12 @@
 
                     saveToLocalStorage();
                     loadStudents();
-                    alert(`Successfully imported ${addedCount} student(s) from spreadsheet!`);
+                    alert(`Successfully imported ${addedCount} student(s) into your separate teacher records!`);
                 } catch (err) {
                     console.error('Excel parse error:', err);
                     alert('Error parsing Excel/CSV file: ' + err.message);
                 } finally {
-                    event.target.value = ''; // Reset file input
+                    event.target.value = '';
                 }
             };
             reader.readAsArrayBuffer(file);
@@ -700,9 +702,8 @@
                 }
             } else {
                 categories = [
-                    { id: 'cat_1', name: 'Science Quiz 1' },
-                    { id: 'cat_2', name: 'Homework & Assignments' },
-                    { id: 'cat_3', name: 'Class Participation' }
+                    { id: 'cat_1', name: 'Science Quiz 1', teacher: 'science_teacher' },
+                    { id: 'cat_2', name: 'Homework & Assignments', teacher: 'science_teacher' }
                 ];
                 saveCategoriesToStorage();
             }
@@ -743,9 +744,12 @@
             const name = document.getElementById('categoryNameInput').value.trim();
             if (!name) return;
 
+            const ownerTag = (currentUser && currentUser.role === 'teacher') ? currentUser.username : 'admin';
+
             const newCat = {
                 id: 'cat_' + Date.now(),
-                name: name
+                name: name,
+                teacher: ownerTag
             };
 
             categories.push(newCat);
@@ -756,7 +760,7 @@
         }
 
         function deleteCategory(catId) {
-            if (!confirm('Are you sure you want to delete this category and all its associated marks?')) return;
+            if (!confirm('Are you sure you want to delete this category?')) return;
             categories = categories.filter(c => c.id !== catId);
             saveCategoriesToStorage();
             renderCategoriesView();
@@ -769,7 +773,6 @@
             studentMarks[studentId][catId] = parseInt(val, 10);
             saveMarksToStorage();
             
-            // Update live display value
             const span = document.getElementById(`val_${studentId}_${catId}`);
             if (span) {
                 span.textContent = val + '%';
@@ -778,27 +781,35 @@
 
         function renderCategoriesView() {
             const container = document.getElementById('categoriesContainer');
+            const ownerTag = (currentUser && currentUser.role === 'teacher') ? currentUser.username : null;
+
+            // Filter categories for this teacher (or all for admin)
+            const activeCategories = (currentUser && currentUser.role === 'admin') 
+                ? categories 
+                : categories.filter(c => !c.teacher || c.teacher === ownerTag);
+
+            const activeStudents = getAccessibleStudents();
             
-            if (categories.length === 0) {
+            if (activeCategories.length === 0) {
                 container.innerHTML = `
                     <div class="bg-white/95 p-12 rounded-2xl border border-purple-100 text-center">
-                        <p class="text-slate-500 font-medium">No categories created yet.</p>
+                        <p class="text-slate-500 font-medium">No categories created yet for your account.</p>
                         <button onclick="openCategoryModal()" class="mt-4 px-4 py-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl text-sm font-bold shadow">Add First Category</button>
                     </div>
                 `;
                 return;
             }
 
-            if (students.length === 0) {
+            if (activeStudents.length === 0) {
                 container.innerHTML = `
                     <div class="bg-white/95 p-12 rounded-2xl border border-purple-100 text-center">
-                        <p class="text-slate-500 font-medium">No students found. Please add students first to grade them with sliders.</p>
+                        <p class="text-slate-500 font-medium">No students found in your separate record sheet. Please add students first.</p>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = categories.map(cat => `
+            container.innerHTML = activeCategories.map(cat => `
                 <div class="bg-white/95 backdrop-blur-md rounded-2xl border border-purple-100 shadow-sm p-6 space-y-4">
                     <div class="flex items-center justify-between border-b border-purple-50 pb-3">
                         <div class="flex items-center space-x-2">
@@ -809,7 +820,7 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        ${students.map(s => {
+                        ${activeStudents.map(s => {
                             const currentMark = (studentMarks[s.id] && studentMarks[s.id][cat.id] !== undefined) ? studentMarks[s.id][cat.id] : 75;
                             return `
                                 <div class="bg-purple-50/40 p-4 rounded-xl border border-purple-100 flex items-center justify-between gap-4">
@@ -860,14 +871,15 @@
 
         function populateReportFilterOptions(type) {
             const select = document.getElementById('reportFilterValue');
+            const accessible = getAccessibleStudents();
             if (type === 'grade') {
-                const grades = [...new Set(students.map(s => s.grade))];
+                const grades = [...new Set(accessible.map(s => s.grade))];
                 select.innerHTML = grades.map(g => `<option value="${g}">${g}</option>`).join('');
             } else if (type === 'section') {
-                const sections = [...new Set(students.map(s => s.section))];
+                const sections = [...new Set(accessible.map(s => s.section))];
                 select.innerHTML = sections.map(sec => `<option value="${sec}">${sec}</option>`).join('');
             } else if (type === 'student') {
-                select.innerHTML = students.map(s => `<option value="${s.id}">${s.name} (${s.studentId})</option>`).join('');
+                select.innerHTML = accessible.map(s => `<option value="${s.id}">${s.name} (${s.studentId})</option>`).join('');
             }
         }
 
@@ -876,24 +888,30 @@
             const filterType = document.getElementById('reportFilterType').value;
             const filterVal = document.getElementById('reportFilterValue').value;
 
-            let targetStudents = students;
-            let reportTitle = "Comprehensive School & Student Summary Report";
+            const accessible = getAccessibleStudents();
+            let targetStudents = accessible;
+            let reportTitle = "Comprehensive Student Report (My Separate Records)";
 
             if (filterType === 'grade') {
-                targetStudents = students.filter(s => s.grade === filterVal);
+                targetStudents = accessible.filter(s => s.grade === filterVal);
                 reportTitle = `Grade Report: ${filterVal}`;
             } else if (filterType === 'section') {
-                targetStudents = students.filter(s => s.section === filterVal);
+                targetStudents = accessible.filter(s => s.section === filterVal);
                 reportTitle = `Section Report: ${filterVal}`;
             } else if (filterType === 'student') {
-                targetStudents = students.filter(s => s.id === filterVal);
+                targetStudents = accessible.filter(s => s.id === filterVal);
                 if (targetStudents.length > 0) {
                     reportTitle = `Individual Student Report: ${targetStudents[0].name}`;
                 }
             }
 
+            const ownerTag = (currentUser && currentUser.role === 'teacher') ? currentUser.name : 'Admin (All)';
+            const ownerCategories = (currentUser && currentUser.role === 'admin') 
+                ? categories 
+                : categories.filter(c => !c.teacher || c.teacher === currentUser.username);
+
             if (targetStudents.length === 0) {
-                outputCard.innerHTML = `<p class="text-slate-500 text-center py-10 font-medium">No students match this report filter.</p>`;
+                outputCard.innerHTML = `<p class="text-slate-500 text-center py-10 font-medium">No students match this report filter in your separate sheet.</p>`;
                 return;
             }
 
@@ -905,11 +923,11 @@
                             <h3 class="text-xl font-black text-slate-900">ATS-AQB Official Report</h3>
                         </div>
                         <p class="text-sm font-bold text-fuchsia-700 mt-1">${reportTitle}</p>
-                        <p class="text-xs text-slate-400 mt-0.5">Generated by: Mr. Moayed Alkhliefat (Science Teacher)</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Teacher Record: ${ownerTag} | School: ATS-AQB</p>
                     </div>
                     <div class="text-right text-xs text-slate-500 font-medium bg-purple-50 px-3.5 py-2 rounded-xl border border-purple-100">
                         <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
-                        <p><strong>Total Students in Report:</strong> ${targetStudents.length}</p>
+                        <p><strong>Total Students:</strong> ${targetStudents.length}</p>
                     </div>
                 </div>
 
@@ -937,7 +955,7 @@
                                 </div>
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                    ${categories.length > 0 ? categories.map(cat => {
+                                    ${ownerCategories.length > 0 ? ownerCategories.map(cat => {
                                         const score = (marks[cat.id] !== undefined) ? marks[cat.id] : 'Not Graded';
                                         return `
                                             <div class="bg-white p-3 rounded-xl border border-purple-100 flex items-center justify-between text-xs">
@@ -945,7 +963,7 @@
                                                 <span class="font-black text-fuchsia-700">${score}${typeof score === 'number' ? '%' : ''}</span>
                                             </div>
                                         `;
-                                    }).join('') : '<p class="text-xs text-slate-400">No evaluation categories created yet.</p>'}
+                                    }).join('') : '<p class="text-xs text-slate-400">No categories created.</p>'}
                                 </div>
 
                                 ${s.notes ? `
@@ -1039,7 +1057,7 @@
             renderTeachers();
         }
 
-        // Students Management
+        // Students Management (Filtered Separately per Teacher)
         async function loadStudents() {
             if (supabaseClient) {
                 try {
@@ -1050,18 +1068,30 @@
 
                     if (error) throw error;
                     
-                    students = (data || []).map(item => ({
-                        id: item.id,
-                        name: item.name || '',
-                        studentId: item.resume_url || '',
-                        grade: parseGrade(item.position).grade,
-                        section: parseGrade(item.position).section,
-                        status: item.status || 'Enrolled',
-                        email: item.email || '',
-                        phone: item.phone || '',
-                        notes: item.notes || '',
-                        created_at: item.created_at
-                    }));
+                    students = (data || []).map(item => {
+                        // Extract assigned teacher from notes if stored as " | Teacher: username" or default to admin
+                        let assignedTeacher = 'admin';
+                        let cleanNotes = item.notes || '';
+                        if (cleanNotes.includes('| Teacher: ')) {
+                            const parts = cleanNotes.split('| Teacher: ');
+                            cleanNotes = parts[0].trim();
+                            assignedTeacher = parts[1].trim();
+                        }
+
+                        return {
+                            id: item.id,
+                            name: item.name || '',
+                            studentId: item.resume_url || '',
+                            grade: parseGrade(item.position).grade,
+                            section: parseGrade(item.position).section,
+                            status: item.status || 'Enrolled',
+                            email: item.email || '',
+                            phone: item.phone || '',
+                            notes: cleanNotes,
+                            teacher: assignedTeacher,
+                            created_at: item.created_at
+                        };
+                    });
                 } catch (err) {
                     console.error('Error loading from Supabase:', err);
                     loadFromLocalStorage();
@@ -1071,6 +1101,16 @@
             }
             renderStudents();
             updateStats();
+        }
+
+        function getAccessibleStudents() {
+            if (!currentUser) return [];
+            if (currentUser.role === 'admin') {
+                return students; // Admin sees all
+            } else {
+                // Teacher sees only students tagged with their username or default unassigned
+                return students.filter(s => !s.teacher || s.teacher === 'admin' || s.teacher === currentUser.username);
+            }
         }
 
         function parseGrade(posStr) {
@@ -1102,6 +1142,7 @@
                         email: 'fatima@ats-aqb.edu',
                         phone: '+971 50 234 5678',
                         notes: 'Science fair project leader.',
+                        teacher: 'science_teacher',
                         created_at: new Date().toISOString()
                     }
                 ];
@@ -1119,7 +1160,9 @@
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const statusFilter = document.getElementById('statusFilter').value;
 
-            const filtered = students.filter(s => {
+            const accessibleStudents = getAccessibleStudents();
+
+            const filtered = accessibleStudents.filter(s => {
                 const matchesSearch = (s.name && s.name.toLowerCase().includes(searchTerm)) ||
                                       (s.studentId && s.studentId.toLowerCase().includes(searchTerm)) ||
                                       (s.grade && s.grade.toLowerCase().includes(searchTerm)) ||
@@ -1185,11 +1228,12 @@
         }
 
         function updateStats() {
-            document.getElementById('statTotal').textContent = students.length;
-            document.getElementById('statEnrolled').textContent = students.filter(s => s.status === 'Enrolled').length;
-            document.getElementById('statPending').textContent = students.filter(s => s.status === 'Pending').length;
-            document.getElementById('statActive').textContent = students.filter(s => s.status === 'Active').length;
-            document.getElementById('statGraduated').textContent = students.filter(s => s.status === 'Graduated').length;
+            const accessible = getAccessibleStudents();
+            document.getElementById('statTotal').textContent = accessible.length;
+            document.getElementById('statEnrolled').textContent = accessible.filter(s => s.status === 'Enrolled').length;
+            document.getElementById('statPending').textContent = accessible.filter(s => s.status === 'Pending').length;
+            document.getElementById('statActive').textContent = accessible.filter(s => s.status === 'Active').length;
+            document.getElementById('statGraduated').textContent = accessible.filter(s => s.status === 'Graduated').length;
         }
 
         function openStudentModal(student = null) {
@@ -1227,6 +1271,10 @@
             const gradeVal = document.getElementById('grade').value;
             const sectionVal = document.getElementById('section').value;
             const combinedPosition = `${gradeVal} | ${sectionVal}`;
+            const ownerTag = (currentUser && currentUser.role === 'teacher') ? currentUser.username : 'admin';
+
+            const rawNotes = document.getElementById('notes').value;
+            const notesWithTag = `${rawNotes} | Teacher: ${ownerTag}`;
 
             const studentData = {
                 name: document.getElementById('fullName').value,
@@ -1235,7 +1283,7 @@
                 email: document.getElementById('email').value,
                 phone: document.getElementById('phone').value,
                 resume_url: document.getElementById('studentId').value,
-                notes: document.getElementById('notes').value
+                notes: notesWithTag
             };
 
             if (supabaseClient) {
@@ -1258,7 +1306,7 @@
                 }
             } else {
                 if (id) {
-                    students = students.map(s => s.id === id ? { ...s, name: studentData.name, studentId: studentData.resume_url, grade: gradeVal, section: sectionVal, status: studentData.status, email: studentData.email, phone: studentData.phone, notes: studentData.notes } : s);
+                    students = students.map(s => s.id === id ? { ...s, name: studentData.name, studentId: studentData.resume_url, grade: gradeVal, section: sectionVal, status: studentData.status, email: studentData.email, phone: studentData.phone, notes: rawNotes, teacher: ownerTag } : s);
                 } else {
                     const newStudent = {
                         id: 'local-' + Date.now(),
@@ -1269,7 +1317,8 @@
                         status: studentData.status,
                         email: studentData.email,
                         phone: studentData.phone,
-                        notes: studentData.notes,
+                        notes: rawNotes,
+                        teacher: ownerTag,
                         created_at: new Date().toISOString()
                     };
                     students.unshift(newStudent);
@@ -1338,12 +1387,13 @@
         }
 
         function exportCSV() {
-            if (students.length === 0) {
+            const accessible = getAccessibleStudents();
+            if (accessible.length === 0) {
                 alert('No students to export.');
                 return;
             }
             const headers = ['Student Name', 'Student ID', 'Grade', 'Section', 'Status', 'Email', 'Phone', 'Notes', 'Added Date'];
-            const rows = students.map(s => [
+            const rows = accessible.map(s => [
                 `"${(s.name || '').replace(/"/g, '""')}"`,
                 `"${(s.studentId || '').replace(/"/g, '""')}"`,
                 `"${(s.grade || '').replace(/"/g, '""')}"`,
@@ -1359,7 +1409,7 @@
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement('a');
             link.setAttribute('href', encodedUri);
-            link.setAttribute('download', 'ats_aqb_student_records.csv');
+            link.setAttribute('download', 'ats_aqb_teacher_records.csv');
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
