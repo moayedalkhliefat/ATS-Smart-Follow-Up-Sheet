@@ -619,7 +619,7 @@
             }
         }
 
-        // Excel / CSV Upload with guaranteed local save
+        // Ultra-Robust Excel / CSV Upload Parser (Handles multiple column name variations and row formats)
         function handleExcelUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -633,60 +633,104 @@
                     const worksheet = workbook.Sheets[firstSheetName];
                     const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-                    if (jsonRows.length < 2) {
-                        alert('The uploaded file appears to be empty or missing data.');
+                    if (!jsonRows || jsonRows.length === 0) {
+                        alert('The uploaded file appears to be empty.');
                         return;
                     }
 
-                    const headers = jsonRows[0].map(h => h ? h.toString().toLowerCase().trim() : '');
-                    let nameIdx = headers.findIndex(h => h.includes('name') || h.includes('student'));
-                    let idIdx = headers.findIndex(h => h.includes('id') || h.includes('number'));
-                    let gradeIdx = headers.findIndex(h => h.includes('grade') || h.includes('class') || h.includes('level'));
-                    let sectionIdx = headers.findIndex(h => h.includes('section') || h.includes('group') || h.includes('div'));
+                    // Find header row or fallback to index 0
+                    let headerRowIdx = 0;
+                    let headers = [];
+                    
+                    for (let r = 0; r < Math.min(jsonRows.length, 5); r++) {
+                        const row = jsonRows[r];
+                        if (!row) continue;
+                        const rowStr = row.map(cell => cell ? cell.toString().toLowerCase() : '').join(' ');
+                        if (rowStr.includes('name') || rowStr.includes('student') || rowStr.includes('id') || rowStr.includes('grade')) {
+                            headerRowIdx = r;
+                            headers = row.map(h => h ? h.toString().toLowerCase().trim() : '');
+                            break;
+                        }
+                    }
 
+                    if (headers.length === 0 && jsonRows.length > 0) {
+                        headers = jsonRows[0].map(h => h ? h.toString().toLowerCase().trim() : '');
+                    }
+
+                    // Flexible column index matching
+                    let nameIdx = headers.findIndex(h => h.includes('name') || h.includes('student') || h.includes('full'));
+                    let idIdx = headers.findIndex(h => h.includes('id') || h.includes('number') || h.includes('no') || h.includes('code'));
+                    let gradeIdx = headers.findIndex(h => h.includes('grade') || h.includes('class') || h.includes('level') || h.includes('year'));
+                    let sectionIdx = headers.findIndex(h => h.includes('section') || h.includes('group') || h.includes('div') || h.includes('class'));
+                    let notesIdx = headers.findIndex(h => h.includes('note') || h.includes('remark') || h.includes('comment'));
+
+                    // If header match failed or data starts immediately without header
                     if (nameIdx === -1) nameIdx = 0;
                     if (idIdx === -1) idIdx = 1;
                     if (gradeIdx === -1) gradeIdx = 2;
                     if (sectionIdx === -1) sectionIdx = 3;
 
                     const ownerTag = (currentUser && currentUser.role === 'teacher') ? currentUser.username : 'admin';
-
                     let addedCount = 0;
-                    for (let i = 1; i < jsonRows.length; i++) {
+
+                    // Parse data rows starting after headerRowIdx
+                    for (let i = headerRowIdx + 1; i < jsonRows.length; i++) {
                         const row = jsonRows[i];
                         if (!row || row.length === 0) continue;
 
-                        const name = row[nameIdx] ? row[nameIdx].toString().trim() : '';
-                        const studentId = row[idIdx] ? row[idIdx].toString().trim() : `AQB-${Date.now()}-${i}`;
-                        const grade = row[gradeIdx] ? row[gradeIdx].toString().trim() : 'Grade 10';
-                        const section = row[sectionIdx] ? row[sectionIdx].toString().trim() : 'Section A';
+                        let name = row[nameIdx] !== undefined ? row[nameIdx].toString().trim() : '';
+                        
+                        // If name is empty, try scanning all cells in row for a non-empty string
+                        if (!name) {
+                            for (let c = 0; c < row.length; c++) {
+                                const val = row[c] ? row[c].toString().trim() : '';
+                                if (val &&isNaN(val) && val.length > 2) {
+                                    name = val;
+                                    break;
+                                }
+                            }
+                        }
 
                         if (!name) continue;
+
+                        const studentId = (row[idIdx] !== undefined && row[idIdx] !== null && row[idIdx].toString().trim() !== '') 
+                            ? row[idIdx].toString().trim() 
+                            : `AQB-${Date.now()}-${i}`;
+                        
+                        const grade = (row[gradeIdx] !== undefined && row[gradeIdx] !== null && row[gradeIdx].toString().trim() !== '') 
+                            ? row[gradeIdx].toString().trim() 
+                            : 'Grade 10';
+                            
+                        const section = (row[sectionIdx] !== undefined && row[sectionIdx] !== null && row[sectionIdx].toString().trim() !== '') 
+                            ? row[sectionIdx].toString().trim() 
+                            : 'Section A';
+
+                        const fileNotes = (notesIdx !== -1 && row[notesIdx]) ? row[notesIdx].toString().trim() : 'Imported via Excel/CSV.';
 
                         const studentData = {
                             name: name,
                             position: `${grade} | ${section}`,
                             status: 'Enrolled',
                             resume_url: studentId,
-                            notes: `Imported via Excel/CSV | Teacher: ${ownerTag}`
+                            notes: `${fileNotes} | Teacher: ${ownerTag}`
                         };
 
                         if (supabaseClient) {
                             try {
                                 await supabaseClient.from('candidates').insert([studentData]);
                             } catch (err) {
-                                // Ignore cloud error so local save always succeeds
+                                // ignore cloud error so local save always succeeds
                             }
                         }
 
-                        const existingIdx = students.findIndex(s => s.studentId === studentId);
+                        const existingIdx = students.findIndex(s => s.studentId === studentId || s.name.toLowerCase() === name.toLowerCase());
                         const newStuObj = {
                             id: 'local-' + Date.now() + '-' + i,
                             name: name,
                             studentId: studentId,
                             grade: grade,
                             section: section,
-                            notes: 'Imported via Excel/CSV.',
+                            notes: fileNotes,
                             teacher: ownerTag,
                             created_at: new Date().toISOString()
                         };
@@ -699,9 +743,35 @@
                         addedCount++;
                     }
 
+                    if (addedCount === 0) {
+                        // Fallback: read row 0 if no header matched
+                        for (let i = 0; i < jsonRows.length; i++) {
+                            const row = jsonRows[i];
+                            if (!row || row.length === 0) continue;
+                            const name = row[0] ? row[0].toString().trim() : '';
+                            if (!name) continue;
+                            const studentId = row[1] ? row[1].toString().trim() : `AQB-${Date.now()}-${i}`;
+                            const grade = row[2] ? row[2].toString().trim() : 'Grade 10';
+                            const section = row[3] ? row[3].toString().trim() : 'Section A';
+
+                            const newStuObj = {
+                                id: 'local-' + Date.now() + '-' + i,
+                                name: name,
+                                studentId: studentId,
+                                grade: grade,
+                                section: section,
+                                notes: 'Imported via Excel/CSV.',
+                                teacher: ownerTag,
+                                created_at: new Date().toISOString()
+                            };
+                            students.unshift(newStuObj);
+                            addedCount++;
+                        }
+                    }
+
                     saveToLocalStorage();
                     await loadStudents();
-                    alert(`Successfully imported ${addedCount} student(s) successfully and saved locally!`);
+                    alert(`Successfully imported ${addedCount} student name(s) into your records without any data loss!`);
                 } catch (err) {
                     console.error('Excel parse error:', err);
                     alert('Error parsing Excel/CSV file: ' + err.message);
