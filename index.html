@@ -117,27 +117,11 @@
 
         <!-- STUDENTS VIEW -->
         <div id="studentsView" class="space-y-8">
-            <!-- Dashboard Stats Cards -->
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <!-- Dashboard Stats Card (Only Total Students) -->
+            <div class="max-w-xs">
                 <div class="bg-white/95 backdrop-blur-md p-5 rounded-2xl border border-purple-100 shadow-sm hover:shadow-md transition">
                     <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Students</p>
                     <p id="statTotal" class="text-3xl font-black text-slate-900 mt-1">0</p>
-                </div>
-                <div class="bg-white/95 backdrop-blur-md p-5 rounded-2xl border border-blue-100 shadow-sm hover:shadow-md transition">
-                    <p class="text-xs font-bold text-blue-500 uppercase tracking-wider">Enrolled</p>
-                    <p id="statEnrolled" class="text-3xl font-black text-blue-600 mt-1">0</p>
-                </div>
-                <div class="bg-white/95 backdrop-blur-md p-5 rounded-2xl border border-amber-100 shadow-sm hover:shadow-md transition">
-                    <p class="text-xs font-bold text-amber-500 uppercase tracking-wider">Pending</p>
-                    <p id="statPending" class="text-3xl font-black text-amber-600 mt-1">0</p>
-                </div>
-                <div class="bg-white/95 backdrop-blur-md p-5 rounded-2xl border border-emerald-100 shadow-sm hover:shadow-md transition">
-                    <p class="text-xs font-bold text-emerald-500 uppercase tracking-wider">Active</p>
-                    <p id="statActive" class="text-3xl font-black text-emerald-600 mt-1">0</p>
-                </div>
-                <div class="bg-white/95 backdrop-blur-md p-5 rounded-2xl border border-purple-100 shadow-sm hover:shadow-md transition">
-                    <p class="text-xs font-bold text-purple-500 uppercase tracking-wider">Graduated</p>
-                    <p id="statGraduated" class="text-3xl font-black text-purple-600 mt-1">0</p>
                 </div>
             </div>
 
@@ -160,16 +144,6 @@
                     <!-- Section Filter -->
                     <select id="sectionFilter" onchange="filterStudents()" class="w-full sm:w-auto px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 font-medium">
                         <option value="">All Sections</option>
-                    </select>
-
-                    <!-- Status Filter -->
-                    <select id="statusFilter" onchange="filterStudents()" class="w-full sm:w-auto px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 font-medium">
-                        <option value="">All Statuses</option>
-                        <option value="Enrolled">Enrolled</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Active">Active</option>
-                        <option value="Graduated">Graduated</option>
-                        <option value="Inactive">Inactive</option>
                     </select>
                 </div>
 
@@ -1192,18 +1166,15 @@
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const gradeFilter = document.getElementById('gradeFilter').value;
             const sectionFilter = document.getElementById('sectionFilter').value;
-            const statusFilter = document.getElementById('statusFilter').value;
 
             const accessibleStudents = getAccessibleStudents();
 
             const filtered = accessibleStudents.filter(s => {
                 const matchesSearch = (s.name && s.name.toLowerCase().includes(searchTerm)) ||
-                                      (s.studentId && s.studentId.toLowerCase().includes(searchTerm)) ||
-                                      (s.email && s.email.toLowerCase().includes(searchTerm));
+                                      (s.studentId && s.studentId.toLowerCase().includes(searchTerm));
                 const matchesGrade = gradeFilter === '' || s.grade === gradeFilter;
                 const matchesSection = sectionFilter === '' || s.section === sectionFilter;
-                const matchesStatus = statusFilter === '' || s.status === statusFilter;
-                return matchesSearch && matchesGrade && matchesSection && matchesStatus;
+                return matchesSearch && matchesGrade && matchesSection;
             });
 
             if (filtered.length === 0) {
@@ -1225,14 +1196,11 @@
                             <div class="flex items-center space-x-2 flex-wrap gap-y-1">
                                 <h4 class="text-base font-bold text-slate-900 truncate">${escapeHtml(s.name)}</h4>
                                 <span class="px-2.5 py-0.5 text-xs font-mono font-bold bg-purple-50 text-purple-700 rounded-lg border border-purple-100">${escapeHtml(s.studentId)}</span>
-                                <span class="px-2.5 py-0.5 text-xs font-bold rounded-full ${getStatusBadgeClass(s.status)}">${escapeHtml(s.status)}</span>
                             </div>
                             <div class="flex items-center space-x-3 text-xs text-slate-500 mt-1 font-medium flex-wrap">
                                 <span><strong>Grade:</strong> ${escapeHtml(s.grade)}</span>
                                 <span>•</span>
                                 <span><strong>Section:</strong> ${escapeHtml(s.section)}</span>
-                                <span>•</span>
-                                <span><strong>Contact:</strong> ${escapeHtml(s.email || s.phone || 'No contact')}</span>
                             </div>
                             ${s.notes ? `<p class="text-xs text-slate-600 mt-1.5 bg-purple-50/50 px-3 py-1.5 rounded-xl border border-purple-100/60 font-medium"><strong>Notes:</strong> ${escapeHtml(s.notes)}</p>` : ''}
                         </div>
@@ -1259,10 +1227,6 @@
         function updateStats() {
             const accessible = getAccessibleStudents();
             document.getElementById('statTotal').textContent = accessible.length;
-            document.getElementById('statEnrolled').textContent = accessible.filter(s => s.status === 'Enrolled').length;
-            document.getElementById('statPending').textContent = accessible.filter(s => s.status === 'Pending').length;
-            document.getElementById('statActive').textContent = accessible.filter(s => s.status === 'Active').length;
-            document.getElementById('statGraduated').textContent = accessible.filter(s => s.status === 'Graduated').length;
         }
 
         function openStudentModal(student = null) {
