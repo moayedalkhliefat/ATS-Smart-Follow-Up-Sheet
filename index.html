@@ -51,7 +51,7 @@
                     <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Select Role / Account</label>
                     <select id="loginRole" onchange="toggleLoginInputs()" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium">
                         <option value="admin">Admin (Mr. Moayed Alkhliefat - View All)</option>
-                        <option value="teacher">Teacher Account (Separate Student Records)</option>
+                        <option value="teacher">Teacher Account (Separate Records & Categories)</option>
                     </select>
                 </div>
 
@@ -96,7 +96,7 @@
             <div class="flex items-center space-x-3">
                 <nav id="navTabs" class="hidden sm:flex items-center space-x-1 bg-purple-50/80 p-1.5 rounded-xl text-xs font-semibold border border-purple-100">
                     <button onclick="switchTab('students')" id="tabStudentsBtn" class="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md transition">Students</button>
-                    <button onclick="switchTab('categories')" id="tabCategoriesBtn" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition">Categories & Marks</button>
+                    <button onclick="switchTab('categories')" id="tabCategoriesBtn" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition">My Categories & Marks</button>
                     <button onclick="switchTab('reports')" id="tabReportsBtn" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition">Reports</button>
                     <button onclick="switchTab('teachers')" id="tabTeachersBtn" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition hidden">Manage Teachers</button>
                 </nav>
@@ -164,7 +164,6 @@
 
                 <!-- Excel Upload / Export / Add Student -->
                 <div class="flex items-center space-x-2 w-full md:w-auto justify-end flex-wrap gap-y-2">
-                    <!-- Hidden file input for Excel / CSV -->
                     <input type="file" id="excelUploadInput" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleExcelUpload(event)">
                     
                     <button onclick="document.getElementById('excelUploadInput').click()" title="Upload Excel or CSV (Name, ID, Grade, Section)" class="inline-flex items-center space-x-1.5 px-3.5 py-2.5 text-sm font-bold text-purple-700 bg-purple-50 border border-purple-200 rounded-xl hover:bg-purple-100 transition shadow-sm">
@@ -230,12 +229,12 @@
         <div id="categoriesView" class="space-y-6 hidden">
             <div class="bg-white/95 backdrop-blur-md p-6 rounded-2xl border border-purple-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
-                    <h2 class="text-lg font-black text-slate-900">Categories & Marks Sliders</h2>
-                    <p class="text-xs text-slate-500 mt-0.5 font-medium">Create evaluation categories (e.g. Quizzes, Homework, Behavior, Participation) and assign marks using interactive sliders (0–100).</p>
+                    <h2 class="text-lg font-black text-slate-900">My Custom Categories & Marks Sliders</h2>
+                    <p class="text-xs text-slate-500 mt-0.5 font-medium">Create your own evaluation categories (e.g. Quizzes, Homework, Behavior) and assign marks using interactive sliders (0–100).</p>
                 </div>
                 <button onclick="openCategoryModal()" class="inline-flex items-center space-x-2 px-4 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-95 transition shadow-lg shadow-fuchsia-500/20 rounded-xl">
                     <i data-lucide="folder-plus" class="w-4 h-4"></i>
-                    <span>Add New Category</span>
+                    <span>Add My Category</span>
                 </button>
             </div>
 
@@ -392,7 +391,7 @@
     <div id="categoryModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden">
         <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full mx-4 overflow-hidden border border-purple-100">
             <div class="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-4 border-b border-purple-100 flex items-center justify-between">
-                <h3 class="text-base font-black text-slate-900">Add Evaluation Category</h3>
+                <h3 class="text-base font-black text-slate-900">Add My Custom Category</h3>
                 <button onclick="closeCategoryModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
@@ -400,7 +399,7 @@
             <form onsubmit="handleCategorySubmit(event)" class="p-6 space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Category Name *</label>
-                    <input type="text" id="categoryNameInput" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="e.g. Midterm Exam / Homework 1">
+                    <input type="text" id="categoryNameInput" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="e.g. Physics Project / Lab Work">
                 </div>
                 <div class="flex items-center justify-end space-x-3 pt-4 border-t border-purple-100">
                     <button type="button" onclick="closeCategoryModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition">Cancel</button>
@@ -459,7 +458,7 @@
         let supabaseClient = null;
         let students = [];
         let teachers = [];
-        let categories = []; // [{ id, name, teacherId }]
+        let categories = []; // [{ id, name, teacher }]
         let studentMarks = {}; // { studentId: { categoryId: mark } }
         let currentUser = null;
 
@@ -576,13 +575,11 @@
             const rBtn = document.getElementById('tabReportsBtn');
             const tBtn = document.getElementById('tabTeachersBtn');
 
-            // Hide all views
             studentsView.classList.add('hidden');
             categoriesView.classList.add('hidden');
             reportsView.classList.add('hidden');
             teachersView.classList.add('hidden');
 
-            // Reset tab button styles
             [sBtn, cBtn, rBtn, tBtn].forEach(btn => {
                 if (btn) btn.className = "px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition";
             });
@@ -606,7 +603,7 @@
             }
         }
 
-        // Excel / CSV Upload Handling (tagged with current teacher if teacher logged in)
+        // Excel / CSV Upload
         function handleExcelUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -691,7 +688,7 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // Categories & Marks Management
+        // Custom Categories per Teacher
         function loadCategoriesFromStorage() {
             const data = localStorage.getItem('ats_aqb_categories');
             if (data) {
@@ -756,7 +753,7 @@
             saveCategoriesToStorage();
             closeCategoryModal();
             renderCategoriesView();
-            alert('Evaluation category added successfully!');
+            alert('Your custom evaluation category was added successfully!');
         }
 
         function deleteCategory(catId) {
@@ -783,18 +780,19 @@
             const container = document.getElementById('categoriesContainer');
             const ownerTag = (currentUser && currentUser.role === 'teacher') ? currentUser.username : null;
 
-            // Filter categories for this teacher (or all for admin)
-            const activeCategories = (currentUser && currentUser.role === 'admin') 
-                ? categories 
-                : categories.filter(c => !c.teacher || c.teacher === ownerTag);
+            // Each teacher chooses and sees only their own custom categories
+            const teacherCategories = (currentUser && currentUser.role === 'admin')
+                ? categories
+                : categories.filter(c => c.teacher === ownerTag);
 
             const activeStudents = getAccessibleStudents();
             
-            if (activeCategories.length === 0) {
+            if (teacherCategories.length === 0) {
                 container.innerHTML = `
-                    <div class="bg-white/95 p-12 rounded-2xl border border-purple-100 text-center">
-                        <p class="text-slate-500 font-medium">No categories created yet for your account.</p>
-                        <button onclick="openCategoryModal()" class="mt-4 px-4 py-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl text-sm font-bold shadow">Add First Category</button>
+                    <div class="bg-white/95 p-12 rounded-2xl border border-purple-100 text-center space-y-3">
+                        <p class="text-slate-600 font-bold">You haven't created any custom evaluation categories yet.</p>
+                        <p class="text-xs text-slate-400">Click the button above to add your own categories (e.g. Lab Report, Quiz 2, Project).</p>
+                        <button onclick="openCategoryModal()" class="mt-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl text-sm font-bold shadow">Add My First Category</button>
                     </div>
                 `;
                 return;
@@ -809,7 +807,7 @@
                 return;
             }
 
-            container.innerHTML = activeCategories.map(cat => `
+            container.innerHTML = teacherCategories.map(cat => `
                 <div class="bg-white/95 backdrop-blur-md rounded-2xl border border-purple-100 shadow-sm p-6 space-y-4">
                     <div class="flex items-center justify-between border-b border-purple-50 pb-3">
                         <div class="flex items-center space-x-2">
@@ -906,9 +904,9 @@
             }
 
             const ownerTag = (currentUser && currentUser.role === 'teacher') ? currentUser.name : 'Admin (All)';
-            const ownerCategories = (currentUser && currentUser.role === 'admin') 
+            const teacherCategories = (currentUser && currentUser.role === 'admin') 
                 ? categories 
-                : categories.filter(c => !c.teacher || c.teacher === currentUser.username);
+                : categories.filter(c => c.teacher === currentUser.username);
 
             if (targetStudents.length === 0) {
                 outputCard.innerHTML = `<p class="text-slate-500 text-center py-10 font-medium">No students match this report filter in your separate sheet.</p>`;
@@ -955,7 +953,7 @@
                                 </div>
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                    ${ownerCategories.length > 0 ? ownerCategories.map(cat => {
+                                    ${teacherCategories.length > 0 ? teacherCategories.map(cat => {
                                         const score = (marks[cat.id] !== undefined) ? marks[cat.id] : 'Not Graded';
                                         return `
                                             <div class="bg-white p-3 rounded-xl border border-purple-100 flex items-center justify-between text-xs">
@@ -963,7 +961,7 @@
                                                 <span class="font-black text-fuchsia-700">${score}${typeof score === 'number' ? '%' : ''}</span>
                                             </div>
                                         `;
-                                    }).join('') : '<p class="text-xs text-slate-400">No categories created.</p>'}
+                                    }).join('') : '<p class="text-xs text-slate-400">No custom categories created yet.</p>'}
                                 </div>
 
                                 ${s.notes ? `
@@ -1057,7 +1055,7 @@
             renderTeachers();
         }
 
-        // Students Management (Filtered Separately per Teacher)
+        // Students Management
         async function loadStudents() {
             if (supabaseClient) {
                 try {
@@ -1069,7 +1067,6 @@
                     if (error) throw error;
                     
                     students = (data || []).map(item => {
-                        // Extract assigned teacher from notes if stored as " | Teacher: username" or default to admin
                         let assignedTeacher = 'admin';
                         let cleanNotes = item.notes || '';
                         if (cleanNotes.includes('| Teacher: ')) {
@@ -1106,9 +1103,8 @@
         function getAccessibleStudents() {
             if (!currentUser) return [];
             if (currentUser.role === 'admin') {
-                return students; // Admin sees all
+                return students;
             } else {
-                // Teacher sees only students tagged with their username or default unassigned
                 return students.filter(s => !s.teacher || s.teacher === 'admin' || s.teacher === currentUser.username);
             }
         }
