@@ -219,7 +219,7 @@
             <div class="bg-white/95 backdrop-blur-md p-6 rounded-2xl border border-purple-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
                     <h2 class="text-lg font-black text-slate-900">Manage Evaluation Categories</h2>
-                    <p class="text-xs text-slate-500 mt-0.5 font-medium">Create or delete your custom colored evaluation categories (e.g. Quizzes, Homework, Behavior) which appear as sliders right inside each student's card.</p>
+                    <p class="text-xs text-slate-500 mt-0.5 font-medium">Create or delete your custom colored evaluation categories (Sliders or True/False) which appear right inside each student's card.</p>
                 </div>
                 <button onclick="openCategoryModal()" class="inline-flex items-center space-x-2 px-4 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-95 transition shadow-lg shadow-fuchsia-500/20 rounded-xl">
                     <i data-lucide="folder-plus" class="w-4 h-4"></i>
@@ -348,6 +348,11 @@
                 </div>
 
                 <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Follow-Up Date / Added Date *</label>
+                    <input type="date" id="studentDate" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium">
+                </div>
+
+                <div>
                     <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Follow-Up Notes</label>
                     <textarea id="notes" rows="3" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="Add academic performance notes, attendance remarks..."></textarea>
                 </div>
@@ -373,6 +378,13 @@
                 <div>
                     <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Category Name *</label>
                     <input type="text" id="categoryNameInput" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="e.g. Physics Project / Lab Work">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Evaluation Type *</label>
+                    <select id="categoryTypeInput" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium">
+                        <option value="slider">Slider (0% - 100%)</option>
+                        <option value="bool">True / False (Yes / No)</option>
+                    </select>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Category Theme Color</label>
@@ -469,8 +481,8 @@
         let supabaseClient = null;
         let students = [];
         let teachers = [];
-        let categories = []; // [{ id, name, teacher, color }]
-        let studentMarks = {}; // { studentIdKey: { categoryId: mark } }
+        let categories = []; // [{ id, name, teacher, color, type ('slider' or 'bool') }]
+        let studentMarks = {}; // { studentIdKey: { categoryId: mark or boolean/string } }
         let currentUser = null;
 
         function initSupabase() {
@@ -672,6 +684,7 @@
                         let idIdx = headers.findIndex(h => h.includes('id') || h.includes('number') || h.includes('no') || h.includes('code'));
                         let gradeIdx = headers.findIndex(h => h.includes('grade') || h.includes('class') || h.includes('level') || h.includes('year'));
                         let sectionIdx = headers.findIndex(h => h.includes('section') || h.includes('group') || h.includes('div') || h.includes('class'));
+                        let dateIdx = headers.findIndex(h => h.includes('date') || h.includes('time') || h.includes('day'));
                         let notesIdx = headers.findIndex(h => h.includes('note') || h.includes('remark') || h.includes('comment'));
 
                         if (nameIdx === -1) nameIdx = 0;
@@ -707,6 +720,20 @@
                                 ? row[sectionIdx].toString().trim() 
                                 : 'Section A';
 
+                            let followDate = new Date().toISOString().slice(0, 10);
+                            if (dateIdx !== -1 && row[dateIdx]) {
+                                const rawDate = row[dateIdx];
+                                if (typeof rawDate === 'number') {
+                                    // Excel serial date conversion
+                                    const excelEpoch = new Date(1899, 11, 30);
+                                    const converted = new Date(excelEpoch.getTime() + rawDate * 86400000);
+                                    if (!isNaN(converted.getTime())) followDate = converted.toISOString().slice(0, 10);
+                                } else {
+                                    const parsedD = new Date(rawDate);
+                                    if (!isNaN(parsedD.getTime())) followDate = parsedD.toISOString().slice(0, 10);
+                                }
+                            }
+
                             const fileNotes = (notesIdx !== -1 && row[notesIdx]) ? row[notesIdx].toString().trim() : 'Imported via Excel/CSV.';
 
                             const studentData = {
@@ -714,7 +741,7 @@
                                 position: `${grade} | ${section}`,
                                 status: 'Enrolled',
                                 resume_url: studentId,
-                                notes: `${fileNotes} | Teacher: ${ownerTag}`
+                                notes: `${fileNotes} | Date: ${followDate} | Teacher: ${ownerTag}`
                             };
 
                             if (supabaseClient) {
@@ -730,6 +757,7 @@
                                 studentId: studentId,
                                 grade: grade,
                                 section: section,
+                                date: followDate,
                                 notes: fileNotes,
                                 teacher: ownerTag,
                                 created_at: new Date().toISOString()
@@ -750,19 +778,19 @@
                             
                             let name = row[0] !== undefined && row[0] !== null ? row[0].toString().trim() : '';
                             if (!name) continue;
-                            // Skip if header-like row
                             if (name.toLowerCase().includes('name') || name.toLowerCase().includes('student')) continue;
 
                             const studentId = (row[1] !== undefined && row[1] !== null && row[1].toString().trim() !== '') ? row[1].toString().trim() : `AQB-${Date.now()}-${i}`;
                             const grade = (row[2] !== undefined && row[2] !== null && row[2].toString().trim() !== '') ? row[2].toString().trim() : 'Grade 10';
                             const section = (row[3] !== undefined && row[3] !== null && row[3].toString().trim() !== '') ? row[3].toString().trim() : 'Section A';
+                            const followDate = new Date().toISOString().slice(0, 10);
 
                             const studentData = {
                                 name: name,
                                 position: `${grade} | ${section}`,
                                 status: 'Enrolled',
                                 resume_url: studentId,
-                                notes: `Imported via Excel/CSV | Teacher: ${ownerTag}`
+                                notes: `Imported via Excel/CSV | Date: ${followDate} | Teacher: ${ownerTag}`
                             };
 
                             if (supabaseClient) {
@@ -778,6 +806,7 @@
                                 studentId: studentId,
                                 grade: grade,
                                 section: section,
+                                date: followDate,
                                 notes: 'Imported via Excel/CSV.',
                                 teacher: ownerTag,
                                 created_at: new Date().toISOString()
@@ -817,6 +846,7 @@
                 'Student ID': s.studentId,
                 'Grade': s.grade,
                 'Section': s.section,
+                'Follow-Up Date': s.date || new Date().toISOString().slice(0, 10),
                 'Follow-Up Notes': s.notes || '',
                 'Added Date': s.created_at ? new Date(s.created_at).toLocaleDateString() : ''
             }));
@@ -868,10 +898,16 @@
                     'Student Name': s.name,
                     'Student ID': s.studentId,
                     'Grade': s.grade,
-                    'Section': s.section
+                    'Section': s.section,
+                    'Follow-Up Date': s.date || new Date().toISOString().slice(0, 10)
                 };
                 teacherCategories.forEach(cat => {
-                    rowObj[cat.name] = (marks[cat.id] !== undefined ? marks[cat.id] + '%' : 'Not Graded');
+                    const val = marks[cat.id];
+                    if (cat.type === 'bool') {
+                        rowObj[cat.name] = (val === true || val === 'Yes' || val === 'true') ? 'Yes (True)' : 'No (False)';
+                    } else {
+                        rowObj[cat.name] = (val !== undefined ? val + '%' : 'Not Graded');
+                    }
                 });
                 rowObj['Notes'] = s.notes || '';
                 return rowObj;
@@ -955,7 +991,8 @@
                             id: item.id.toString(),
                             name: item.name,
                             teacher: item.position,
-                            color: item.email || 'purple'
+                            color: item.email || 'purple',
+                            type: item.phone || 'slider'
                         }));
                     }
                 } catch (e) {
@@ -973,8 +1010,8 @@
                 }
             } else {
                 localCats = [
-                    { id: 'cat_1', name: 'Science Quiz 1', teacher: 'science_teacher', color: 'purple' },
-                    { id: 'cat_2', name: 'Homework & Assignments', teacher: 'science_teacher', color: 'blue' }
+                    { id: 'cat_1', name: 'Science Quiz 1', teacher: 'science_teacher', color: 'purple', type: 'slider' },
+                    { id: 'cat_2', name: 'Homework Completed', teacher: 'science_teacher', color: 'blue', type: 'bool' }
                 ];
             }
 
@@ -1023,13 +1060,15 @@
 
             const colorRadio = document.querySelector('input[name="catColor"]:checked');
             const color = colorRadio ? colorRadio.value : 'purple';
+            const type = document.getElementById('categoryTypeInput').value; // 'slider' or 'bool'
             const ownerTag = (currentUser && currentUser.role === 'teacher') ? currentUser.username : 'admin';
 
             const newCat = {
                 id: 'cat_' + Date.now(),
                 name: name,
                 teacher: ownerTag,
-                color: color
+                color: color,
+                type: type
             };
 
             if (supabaseClient) {
@@ -1038,6 +1077,7 @@
                         name: name,
                         position: ownerTag,
                         email: color,
+                        phone: type,
                         status: 'CATEGORY_RECORD',
                         notes: 'Evaluation Category'
                     }]);
@@ -1075,13 +1115,26 @@
             if (!studentMarks[studentIdKey]) {
                 studentMarks[studentIdKey] = {};
             }
-            studentMarks[studentIdKey][catId] = parseInt(val, 10);
+            studentMarks[studentIdKey][catId] = val;
             saveMarksToStorage();
             
             const span = document.getElementById(`val_${studentIdKey}_${catId}`);
             if (span) {
-                span.textContent = val + '%';
+                span.textContent = val + (typeof val === 'number' || !isNaN(val) ? '%' : '');
             }
+        }
+
+        function toggleBoolMark(studentIdKey, catId, btnElem, colorTheme) {
+            if (!studentMarks[studentIdKey]) {
+                studentMarks[studentIdKey] = {};
+            }
+            const current = studentMarks[studentIdKey][catId];
+            const nextVal = (current === true || current === 'Yes') ? false : true;
+            studentMarks[studentIdKey][catId] = nextVal;
+            saveMarksToStorage();
+
+            // Re-render student card or update button state visually
+            renderStudents();
         }
 
         function getColorClasses(color) {
@@ -1115,13 +1168,17 @@
 
             container.innerHTML = teacherCategories.map(cat => {
                 const cols = getColorClasses(cat.color);
+                const typeLabel = (cat.type === 'bool') ? 'True / False (Yes / No)' : 'Slider (0% - 100%)';
                 return `
                     <div class="bg-white/95 backdrop-blur-md rounded-2xl border ${cols.border} shadow-sm p-5 flex items-center justify-between gap-4">
                         <div class="flex items-center space-x-3">
                             <span class="w-4 h-4 rounded-full ${cols.dot}"></span>
                             <div>
                                 <h4 class="text-base font-black text-slate-900">${escapeHtml(cat.name)}</h4>
-                                <span class="text-xs text-slate-400 font-medium uppercase tracking-wider">Theme: ${cat.color}</span>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <span class="text-xs text-slate-400 font-medium uppercase tracking-wider">Theme: ${cat.color}</span>
+                                    <span class="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-md font-bold">${typeLabel}</span>
+                                </div>
                             </div>
                         </div>
                         <button onclick="deleteCategory('${cat.id}')" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition border border-slate-200">
@@ -1228,9 +1285,16 @@
                         const marks = studentMarks[s.studentId] || {};
                         const markEntries = Object.entries(marks);
                         let avgScore = 0;
+                        let sliderCount = 0;
                         if (markEntries.length > 0) {
-                            const sum = markEntries.reduce((acc, [, val]) => acc + val, 0);
-                            avgScore = Math.round(sum / markEntries.length);
+                            markEntries.forEach(([catId, val]) => {
+                                const catObj = categories.find(c => c.id === catId);
+                                if (catObj && catObj.type !== 'bool' && typeof val === 'number') {
+                                    avgScore += val;
+                                    sliderCount++;
+                                }
+                            });
+                            if (sliderCount > 0) avgScore = Math.round(avgScore / sliderCount);
                         }
 
                         return `
@@ -1238,20 +1302,24 @@
                                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                                     <div>
                                         <h4 class="text-base font-black text-slate-900">${escapeHtml(s.name)}</h4>
-                                        <p class="text-xs text-slate-500 font-mono">ID: ${escapeHtml(s.studentId)} | Grade: ${escapeHtml(s.grade)} (${escapeHtml(s.section)})</p>
+                                        <p class="text-xs text-slate-500 font-mono">ID: ${escapeHtml(s.studentId)} | Grade: ${escapeHtml(s.grade)} (${escapeHtml(s.section)}) | Date: ${escapeHtml(s.date || 'N/A')}</p>
                                     </div>
-                                    <div class="flex items-center space-x-3">
-                                        <span class="px-3 py-1 text-xs font-black bg-purple-100 text-purple-900 rounded-full">Avg Score: ${avgScore}%</span>
-                                    </div>
+                                    ${sliderCount > 0 ? `<div class="flex items-center space-x-3"><span class="px-3 py-1 text-xs font-black bg-purple-100 text-purple-900 rounded-full">Avg Score: ${avgScore}%</span></div>` : ''}
                                 </div>
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                     ${teacherCategories.length > 0 ? teacherCategories.map(cat => {
-                                        const score = (marks[cat.id] !== undefined) ? marks[cat.id] : 'Not Graded';
+                                        const val = marks[cat.id];
+                                        let displayVal = 'Not Graded';
+                                        if (cat.type === 'bool') {
+                                            displayVal = (val === true || val === 'Yes' || val === 'true') ? 'Yes (True)' : 'No (False)';
+                                        } else if (val !== undefined) {
+                                            displayVal = val + '%';
+                                        }
                                         return `
                                             <div class="bg-white p-3 rounded-xl border border-purple-100 flex items-center justify-between text-xs">
                                                 <span class="font-bold text-slate-700">${escapeHtml(cat.name)}:</span>
-                                                <span class="font-black text-fuchsia-700">${score}${typeof score === 'number' ? '%' : ''}</span>
+                                                <span class="font-black text-fuchsia-700">${displayVal}</span>
                                             </div>
                                         `;
                                     }).join('') : '<p class="text-xs text-slate-400">No custom categories created yet.</p>'}
@@ -1420,7 +1488,20 @@
                         remoteStudents = data.filter(item => item.status !== 'TEACHER_ACCOUNT' && item.status !== 'CATEGORY_RECORD').map(item => {
                             let assignedTeacher = 'admin';
                             let cleanNotes = item.notes || '';
-                            if (cleanNotes.includes('| Teacher: ')) {
+                            let parsedDate = new Date().toISOString().slice(0, 10);
+                            
+                            if (cleanNotes.includes('| Date: ')) {
+                                const parts = cleanNotes.split('| Date: ');
+                                cleanNotes = parts[0].trim();
+                                const rest = parts[1];
+                                if (rest.includes('| Teacher: ')) {
+                                    const subParts = rest.split('| Teacher: ');
+                                    parsedDate = subParts[0].trim();
+                                    assignedTeacher = subParts[1].trim();
+                                } else {
+                                    parsedDate = rest.trim();
+                                }
+                            } else if (cleanNotes.includes('| Teacher: ')) {
                                 const parts = cleanNotes.split('| Teacher: ');
                                 cleanNotes = parts[0].trim();
                                 assignedTeacher = parts[1].trim();
@@ -1432,6 +1513,7 @@
                                 studentId: item.resume_url || '',
                                 grade: parseGrade(item.position).grade,
                                 section: parseGrade(item.position).section,
+                                date: parsedDate,
                                 notes: cleanNotes,
                                 teacher: assignedTeacher,
                                 created_at: item.created_at
@@ -1472,6 +1554,7 @@
                         studentId: 'AQB-2026-101',
                         grade: 'Grade 10',
                         section: 'Section A',
+                        date: new Date().toISOString().slice(0, 10),
                         notes: 'Science fair project leader.',
                         teacher: 'science_teacher',
                         created_at: new Date().toISOString()
@@ -1558,6 +1641,7 @@
             
             container.innerHTML = filtered.map(s => {
                 const marks = studentMarks[s.studentId] || {};
+                const studentDate = s.date || new Date().toISOString().slice(0, 10);
                 return `
                     <div class="bg-white/95 backdrop-blur-md p-6 rounded-3xl border border-purple-100 shadow-sm hover:shadow-md transition space-y-4">
                         <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -1574,6 +1658,8 @@
                                         <span><strong>Grade:</strong> ${escapeHtml(s.grade)}</span>
                                         <span>•</span>
                                         <span><strong>Section:</strong> ${escapeHtml(s.section)}</span>
+                                        <span>•</span>
+                                        <span class="text-fuchsia-700 font-bold"><strong>Date:</strong> ${escapeHtml(studentDate)}</span>
                                     </div>
                                     ${s.notes ? `<p class="text-xs text-slate-600 mt-1.5 bg-purple-50/50 px-3 py-1.5 rounded-xl border border-purple-100/60 font-medium"><strong>Notes:</strong> ${escapeHtml(s.notes)}</p>` : ''}
                                 </div>
@@ -1589,24 +1675,39 @@
                             </div>
                         </div>
 
-                        <!-- Sliders for Student Evaluation Categories -->
+                        <!-- Sliders or True/False Toggles for Student Evaluation Categories -->
                         ${teacherCategories.length > 0 ? `
                             <div class="border-t border-purple-50 pt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                 ${teacherCategories.map(cat => {
                                     const cols = getColorClasses(cat.color);
-                                    const currentMark = (marks[cat.id] !== undefined) ? marks[cat.id] : 75;
-                                    return `
-                                        <div class="${cols.bg} p-3 rounded-xl border ${cols.border} flex items-center justify-between gap-3">
-                                            <div class="min-w-0 flex items-center space-x-2">
-                                                <span class="w-2.5 h-2.5 rounded-full ${cols.dot} flex-shrink-0"></span>
-                                                <span class="text-xs font-bold text-slate-800 truncate">${escapeHtml(cat.name)}</span>
+                                    if (cat.type === 'bool') {
+                                        const isTrue = marks[cat.id] === true || marks[cat.id] === 'Yes';
+                                        return `
+                                            <div class="${cols.bg} p-3 rounded-xl border ${cols.border} flex items-center justify-between gap-3">
+                                                <div class="min-w-0 flex items-center space-x-2">
+                                                    <span class="w-2.5 h-2.5 rounded-full ${cols.dot} flex-shrink-0"></span>
+                                                    <span class="text-xs font-bold text-slate-800 truncate">${escapeHtml(cat.name)}</span>
+                                                </div>
+                                                <button onclick="toggleBoolMark('${s.studentId}', '${cat.id}')" class="px-3 py-1.5 text-xs font-black rounded-lg transition shadow-sm ${isTrue ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'}">
+                                                    ${isTrue ? 'Yes (True)' : 'No (False)'}
+                                                </button>
                                             </div>
-                                            <div class="flex items-center space-x-2 w-32 flex-shrink-0">
-                                                <input type="range" min="0" max="100" value="${currentMark}" oninput="updateMark('${s.studentId}', '${cat.id}', this.value)" class="w-full ${cols.accent} cursor-pointer">
-                                                <span id="val_${s.studentId}_${cat.id}" class="text-[11px] font-black ${cols.text} w-8 text-right">${currentMark}%</span>
+                                        `;
+                                    } else {
+                                        const currentMark = (marks[cat.id] !== undefined) ? marks[cat.id] : 75;
+                                        return `
+                                            <div class="${cols.bg} p-3 rounded-xl border ${cols.border} flex items-center justify-between gap-3">
+                                                <div class="min-w-0 flex items-center space-x-2">
+                                                    <span class="w-2.5 h-2.5 rounded-full ${cols.dot} flex-shrink-0"></span>
+                                                    <span class="text-xs font-bold text-slate-800 truncate">${escapeHtml(cat.name)}</span>
+                                                </div>
+                                                <div class="flex items-center space-x-2 w-32 flex-shrink-0">
+                                                    <input type="range" min="0" max="100" value="${currentMark}" oninput="updateMark('${s.studentId}', '${cat.id}', this.value)" class="w-full ${cols.accent} cursor-pointer">
+                                                    <span id="val_${s.studentId}_${cat.id}" class="text-[11px] font-black ${cols.text} w-8 text-right">${currentMark}%</span>
+                                                </div>
                                             </div>
-                                        </div>
-                                    `;
+                                        `;
+                                    }
                                 }).join('')}
                             </div>
                         ` : ''}
@@ -1641,9 +1742,11 @@
                 document.getElementById('studentId').value = student.studentId || '';
                 document.getElementById('grade').value = student.grade || '';
                 document.getElementById('section').value = student.section || '';
+                document.getElementById('studentDate').value = student.date || new Date().toISOString().slice(0, 10);
                 document.getElementById('notes').value = student.notes || '';
             } else {
                 title.textContent = 'Add New Student';
+                document.getElementById('studentDate').value = new Date().toISOString().slice(0, 10);
             }
 
             modal.classList.remove('hidden');
@@ -1658,11 +1761,12 @@
             const id = document.getElementById('studentIdDb').value;
             const gradeVal = document.getElementById('grade').value;
             const sectionVal = document.getElementById('section').value;
+            const dateVal = document.getElementById('studentDate').value || new Date().toISOString().slice(0, 10);
             const combinedPosition = `${gradeVal} | ${sectionVal}`;
             const ownerTag = (currentUser && currentUser.role === 'teacher') ? currentUser.username : 'admin';
 
             const rawNotes = document.getElementById('notes').value;
-            const notesWithTag = `${rawNotes} | Teacher: ${ownerTag}`;
+            const notesWithTag = `${rawNotes} | Date: ${dateVal} | Teacher: ${ownerTag}`;
             const studentIdInput = document.getElementById('studentId').value.trim();
             const fullNameInput = document.getElementById('fullName').value.trim();
 
@@ -1699,6 +1803,7 @@
                 studentId: studentIdInput,
                 grade: gradeVal,
                 section: sectionVal,
+                date: dateVal,
                 notes: rawNotes,
                 teacher: ownerTag,
                 created_at: new Date().toISOString()
