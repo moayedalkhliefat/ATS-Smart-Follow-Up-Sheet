@@ -546,14 +546,15 @@
             const tabTeachersBtn = document.getElementById('tabTeachersBtn');
             const roleBadge = document.getElementById('navRoleBadge');
 
-            const isAdmin = currentUser.role === 'admin' || (currentUser.username && currentUser.username.toLowerCase().includes('moayed'));
+            // Strictly check admin role or specific admin username
+            const isAdmin = currentUser.role === 'admin' && currentUser.username === 'moayed alkhliefat';
 
             if (isAdmin) {
-                currentUser.role = 'admin';
                 badge.textContent = 'Admin: Mr. Moayed';
                 roleBadge.textContent = 'Admin View (All)';
                 if (tabTeachersBtn) tabTeachersBtn.classList.remove('hidden');
             } else {
+                currentUser.role = 'teacher';
                 badge.textContent = `Teacher: ${currentUser.name}`;
                 roleBadge.textContent = `${currentUser.subject || 'Teacher'} Dept`;
                 if (tabTeachersBtn) tabTeachersBtn.classList.add('hidden');
@@ -1012,29 +1013,35 @@
 
         function handleTeacherSubmit(event) {
             event.preventDefault();
-            const newTeacher = {
-                name: document.getElementById('tName').value.trim(),
-                username: document.getElementById('tUsername').value.trim(),
-                subject: document.getElementById('tSubject').value.trim(),
-                password: document.getElementById('tPassword').value.trim(),
-                email: document.getElementById('tEmail').value.trim()
-            };
+            const nameInput = document.getElementById('tName').value.trim();
+            const usernameInput = document.getElementById('tUsername').value.trim();
+            const subjectInput = document.getElementById('tSubject').value.trim();
+            const passwordInput = document.getElementById('tPassword').value.trim();
+            const emailInput = document.getElementById('tEmail').value.trim();
 
-            if (!newTeacher.name || !newTeacher.username || !newTeacher.password) {
+            if (!nameInput || !usernameInput || !passwordInput) {
                 alert('Please fill in Name, Username, and Password.');
                 return;
             }
 
-            if (teachers.some(t => t.username.toLowerCase() === newTeacher.username.toLowerCase())) {
+            if (teachers.some(t => t.username.toLowerCase() === usernameInput.toLowerCase())) {
                 alert('Username already exists. Choose another username.');
                 return;
             }
+
+            const newTeacher = {
+                name: nameInput,
+                username: usernameInput,
+                subject: subjectInput || 'General',
+                password: passwordInput,
+                email: emailInput
+            };
 
             teachers.push(newTeacher);
             saveTeachersToStorage();
             closeTeacherAccountModal();
             
-            // Reset form fields
+            // Reset form
             document.getElementById('tName').value = '';
             document.getElementById('tUsername').value = '';
             document.getElementById('tSubject').value = '';
@@ -1042,7 +1049,8 @@
             document.getElementById('tEmail').value = '';
 
             renderTeachers();
-            alert('Teacher account created successfully! They can now log in.');
+            populateTeacherDropdown();
+            alert('Teacher account created successfully! They can now select and log in with this account.');
         }
 
         function renderTeachers() {
