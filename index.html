@@ -247,6 +247,7 @@
                         <option value="grade">Filter by Grade</option>
                         <option value="section">Filter by Section</option>
                         <option value="student">Filter by Individual Student</option>
+                        <option value="date">Filter by Follow-Up Date</option>
                     </select>
                     <select id="reportFilterValue" onchange="renderReports()" class="px-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 font-medium hidden">
                         <!-- Options filled dynamically -->
@@ -858,6 +859,7 @@
             if (filterType === 'grade') targetStudents = accessible.filter(s => s.grade === filterVal);
             else if (filterType === 'section') targetStudents = accessible.filter(s => s.section === filterVal);
             else if (filterType === 'student') targetStudents = accessible.filter(s => s.studentId === filterVal);
+            else if (filterType === 'date') targetStudents = accessible.filter(s => (s.date === filterVal) || (s.logs && s.logs.some(l => l.date === filterVal)));
 
             if (targetStudents.length === 0) {
                 alert('No data to export for this report.');
@@ -1208,6 +1210,16 @@
                 select.innerHTML = sections.map(sec => `<option value="${sec}">${sec}</option>`).join('');
             } else if (type === 'student') {
                 select.innerHTML = accessible.map(s => `<option value="${s.studentId}">${s.name} (${s.studentId})</option>`).join('');
+            } else if (type === 'date') {
+                const allDatesSet = new Set();
+                accessible.forEach(s => {
+                    if (s.date) allDatesSet.add(s.date);
+                    if (s.logs && Array.isArray(s.logs)) {
+                        s.logs.forEach(l => { if (l.date) allDatesSet.add(l.date); });
+                    }
+                });
+                const dates = Array.from(allDatesSet).sort().reverse();
+                select.innerHTML = dates.map(d => `<option value="${d}">${d}</option>`).join('');
             }
         }
 
@@ -1231,6 +1243,9 @@
                 if (targetStudents.length > 0) {
                     reportTitle = `Individual Student Report: ${targetStudents[0].name}`;
                 }
+            } else if (filterType === 'date') {
+                targetStudents = accessible.filter(s => (s.date === filterVal) || (s.logs && s.logs.some(l => l.date === filterVal)));
+                reportTitle = `Follow-Up Date Report: ${filterVal}`;
             }
 
             const ownerTag = (currentUser && currentUser.role === 'teacher') ? currentUser.name : 'Admin (All)';
