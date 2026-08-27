@@ -713,6 +713,16 @@
 
                     saveToLocalStorage();
                     await loadStudents();
+
+                    if (document.getElementById('gradeFilter')) document.getElementById('gradeFilter').value = '';
+                    if (document.getElementById('sectionFilter')) document.getElementById('sectionFilter').value = '';
+                    if (document.getElementById('dateFilter')) document.getElementById('dateFilter').value = '';
+                    if (document.getElementById('searchInput')) document.getElementById('searchInput').value = '';
+
+                    populateFilterDropdowns();
+                    renderStudents();
+                    updateStats();
+
                     alert(`Successfully imported ${addedCount} student record(s) from Excel/CSV file!`);
                 } catch (err) {
                     console.error('Excel parse error:', err);
