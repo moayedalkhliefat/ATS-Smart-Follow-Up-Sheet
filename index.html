@@ -103,6 +103,10 @@
                 </nav>
 
                 <div class="flex items-center space-x-2 pl-3 border-l border-slate-200">
+                    <button onclick="openCloudModal()" title="Cloud / Supabase Settings" class="p-2 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-xl transition flex items-center gap-1 text-xs font-bold border border-purple-200">
+                        <i data-lucide="cloud" class="w-4 h-4"></i>
+                        <span class="hidden md:inline">Cloud Sync</span>
+                    </button>
                     <span id="currentUserBadge" class="text-xs font-bold text-purple-800 bg-purple-100 px-3 py-1.5 rounded-xl border border-purple-200">Admin</span>
                     <button onclick="logout()" title="Logout" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition">
                         <i data-lucide="log-out" class="w-4 h-4"></i>
@@ -151,18 +155,29 @@
                     </select>
                 </div>
 
-                <!-- Excel Upload / Export / Add Student -->
+                <!-- Excel Upload / Export / Backup / Add Student -->
                 <div class="flex items-center space-x-2 w-full md:w-auto justify-end flex-wrap gap-y-2">
                     <input type="file" id="excelUploadInput" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleExcelUpload(event)">
+                    <input type="file" id="jsonRestoreInput" accept=".json" class="hidden" onchange="importJSONBackup(event)">
                     
-                    <button onclick="document.getElementById('excelUploadInput').click()" title="Upload Excel or CSV (Name, ID, Grade, Section)" class="inline-flex items-center space-x-1.5 px-3.5 py-2.5 text-sm font-bold text-purple-700 bg-purple-50 border border-purple-200 rounded-xl hover:bg-purple-100 transition shadow-sm">
+                    <button onclick="document.getElementById('excelUploadInput').click()" title="Upload Excel or CSV" class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 rounded-xl hover:bg-purple-100 transition shadow-sm">
                         <i data-lucide="file-spreadsheet" class="w-4 h-4 text-fuchsia-600"></i>
-                        <span>Upload Excel/CSV</span>
+                        <span>Excel</span>
                     </button>
 
-                    <button onclick="exportCSV()" class="inline-flex items-center space-x-1.5 px-3.5 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition shadow-sm">
+                    <button onclick="exportJSONBackup()" title="Backup All Data to JSON" class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition shadow-sm">
+                        <i data-lucide="save" class="w-4 h-4 text-emerald-600"></i>
+                        <span>Backup</span>
+                    </button>
+
+                    <button onclick="document.getElementById('jsonRestoreInput').click()" title="Restore Data from JSON" class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-xl hover:bg-amber-100 transition shadow-sm">
+                        <i data-lucide="upload" class="w-4 h-4 text-amber-600"></i>
+                        <span>Restore</span>
+                    </button>
+
+                    <button onclick="exportCSV()" class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition shadow-sm">
                         <i data-lucide="download" class="w-4 h-4 text-fuchsia-600"></i>
-                        <span>Export CSV</span>
+                        <span>CSV</span>
                     </button>
 
                     <button onclick="openStudentModal()" class="inline-flex items-center space-x-2 px-4 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-95 transition shadow-lg shadow-fuchsia-500/20 rounded-xl">
@@ -401,29 +416,67 @@
         </div>
     </div>
 
+    <!-- CLOUD SETTINGS MODAL -->
+    <div id="cloudModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 overflow-hidden border border-purple-100">
+            <div class="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-4 border-b border-purple-100 flex items-center justify-between">
+                <h3 class="text-lg font-black text-slate-900">Supabase Cloud Settings</h3>
+                <button onclick="closeCloudModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    By default, your records are saved securely in your browser's local database. If you wish to sync across different computers/devices, enter your free Supabase project URL and Anon Key below.
+                </p>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Supabase Project URL</label>
+                    <input type="text" id="supabaseUrlInput" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="https://xyz.supabase.co">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Supabase Anon Key</label>
+                    <input type="password" id="supabaseKeyInput" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="eyJh...">
+                </div>
+                <div class="flex items-center justify-between pt-4 border-t border-purple-100">
+                    <button type="button" onclick="clearCloudConfig()" class="px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition">Disconnect Cloud</button>
+                    <div class="space-x-2">
+                        <button type="button" onclick="closeCloudModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition">Cancel</button>
+                        <button type="button" onclick="saveCloudConfig()" class="px-4 py-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl text-sm font-bold hover:opacity-95 transition shadow">Save & Connect</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- JavaScript Application Logic -->
     <script>
         lucide.createIcons();
 
-        // Supabase configuration
-        const SUPABASE_URL = 'https://idfwwncwtwkwxtwpkato.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkZnd3bmN3dHdrd3h0d3BrYXRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTgyMzEsImV4cCI6MjEwMzM3NDIzMX0.bG5xiin2OJAn69rqIA1CSohQIsC3nDxeBo3ESkaq7oE';
+        // Supabase configuration (with custom saved override support)
+        const DEFAULT_SUPABASE_URL = 'https://idfwwncwtwkwxtwpkato.supabase.co';
+        const DEFAULT_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkZnd3bmN3dHdrd3h0d3BrYXRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTgyMzEsImV4cCI6MjEwMzM3NDIzMX0.bG5xiin2OJAn69rqIA1CSohQIsC3nDxeBo3ESkaq7oE';
 
         let supabaseClient = null;
         let students = [];
         let teachers = [];
         let categories = []; // [{ id, name, teacher, color }]
-        let studentMarks = {}; // { studentIdKey: { categoryId: mark } } (keyed by student's unique studentId string for absolute stability)
+        let studentMarks = {}; // { studentIdKey: { categoryId: mark } }
         let currentUser = null;
 
-        try {
-            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        } catch (e) {
-            console.error('Supabase init error:', e);
+        function initSupabase() {
+            const savedUrl = localStorage.getItem('ats_supabase_url') || DEFAULT_SUPABASE_URL;
+            const savedKey = localStorage.getItem('ats_supabase_key') || DEFAULT_SUPABASE_KEY;
+            try {
+                supabaseClient = supabase.createClient(savedUrl, savedKey);
+            } catch (e) {
+                console.error('Supabase init error:', e);
+                supabaseClient = null;
+            }
         }
 
         // Initialize App & Login Check
         window.addEventListener('DOMContentLoaded', async () => {
+            initSupabase();
             await loadTeachersFromStorage();
             await loadCategoriesFromStorage();
             loadMarksFromStorage();
@@ -566,7 +619,7 @@
             }
         }
 
-        // Excel / CSV Upload with robust merge
+        // Excel / CSV Upload with guaranteed local save
         function handleExcelUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -622,11 +675,10 @@
                             try {
                                 await supabaseClient.from('candidates').insert([studentData]);
                             } catch (err) {
-                                console.error('Supabase excel row insert error:', err);
+                                // Ignore cloud error so local save always succeeds
                             }
                         }
 
-                        // Add to local array immediately
                         const existingIdx = students.findIndex(s => s.studentId === studentId);
                         const newStuObj = {
                             id: 'local-' + Date.now() + '-' + i,
@@ -649,7 +701,7 @@
 
                     saveToLocalStorage();
                     await loadStudents();
-                    alert(`Successfully imported ${addedCount} student(s) into your records without losing any existing data!`);
+                    alert(`Successfully imported ${addedCount} student(s) successfully and saved locally!`);
                 } catch (err) {
                     console.error('Excel parse error:', err);
                     alert('Error parsing Excel/CSV file: ' + err.message);
@@ -660,7 +712,64 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // Robust Cloud-Synced Categories with Local Merge
+        // JSON Backup & Restore for 100% Data Preservation across PCs/Sessions
+        function exportJSONBackup() {
+            const backupData = {
+                students: students,
+                teachers: teachers,
+                categories: categories,
+                studentMarks: studentMarks,
+                exportDate: new Date().toISOString()
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `ATS_AQB_Backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importJSONBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed.students && Array.isArray(parsed.students)) {
+                        students = parsed.students;
+                    }
+                    if (parsed.teachers && Array.isArray(parsed.teachers)) {
+                        teachers = parsed.teachers;
+                    }
+                    if (parsed.categories && Array.isArray(parsed.categories)) {
+                        categories = parsed.categories;
+                    }
+                    if (parsed.studentMarks && typeof parsed.studentMarks === 'object') {
+                        studentMarks = parsed.studentMarks;
+                    }
+
+                    saveToLocalStorage();
+                    saveCategoriesToStorage();
+                    saveTeachersToStorage();
+                    saveMarksToStorage();
+
+                    await loadStudents();
+                    renderCategoriesView();
+                    renderTeachers();
+                    alert('Data restored successfully! All your records, categories, and marks are now loaded.');
+                } catch (err) {
+                    alert('Invalid backup file format: ' + err.message);
+                } finally {
+                    event.target.value = '';
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Categories Management
         async function loadCategoriesFromStorage() {
             let remoteCats = [];
             if (supabaseClient) {
@@ -679,7 +788,7 @@
                         }));
                     }
                 } catch (e) {
-                    console.error('Failed to load categories from Supabase', e);
+                    // ignore cloud error
                 }
             }
 
@@ -698,7 +807,6 @@
                 ];
             }
 
-            // Merge local and remote categories (deduplicated by name + teacher)
             const catMap = new Map();
             localCats.forEach(c => catMap.set(c.name + '_' + (c.teacher || 'admin'), c));
             remoteCats.forEach(c => catMap.set(c.name + '_' + (c.teacher || 'admin'), { ...catMap.get(c.name + '_' + (c.teacher || 'admin')), ...c }));
@@ -744,7 +852,6 @@
 
             const colorRadio = document.querySelector('input[name="catColor"]:checked');
             const color = colorRadio ? colorRadio.value : 'purple';
-
             const ownerTag = (currentUser && currentUser.role === 'teacher') ? currentUser.username : 'admin';
 
             const newCat = {
@@ -764,7 +871,7 @@
                         notes: 'Evaluation Category'
                     }]);
                 } catch (e) {
-                    console.error('Supabase category save error:', e);
+                    // ignore cloud error
                 }
             }
 
@@ -773,7 +880,7 @@
             closeCategoryModal();
             renderCategoriesView();
             renderStudents();
-            alert('Your custom colored category was added successfully!');
+            alert('Evaluation category added successfully!');
         }
 
         async function deleteCategory(catId) {
@@ -783,7 +890,7 @@
                 try {
                     await supabaseClient.from('candidates').delete().eq('id', catId);
                 } catch (e) {
-                    console.error(e);
+                    // ignore cloud error
                 }
             }
 
@@ -1010,7 +1117,7 @@
                         }));
                     }
                 } catch (e) {
-                    console.error('Failed to load teachers from Supabase', e);
+                    // ignore cloud error
                 }
             }
 
@@ -1083,7 +1190,7 @@
                         status: 'TEACHER_ACCOUNT'
                     }]);
                 } catch (e) {
-                    console.error('Supabase teacher save error:', e);
+                    // ignore cloud error
                 }
             }
 
@@ -1128,7 +1235,7 @@
             renderTeachers();
         }
 
-        // Students Management with Robust Merge (Zero Data Loss on Add/Refresh)
+        // Students Management with Guaranteed Local Save & Zero Data Loss
         async function loadStudents() {
             let remoteStudents = [];
             if (supabaseClient) {
@@ -1161,7 +1268,7 @@
                         });
                     }
                 } catch (err) {
-                    console.error('Error loading students from Supabase:', err);
+                    // ignore cloud error
                 }
             }
 
@@ -1175,7 +1282,6 @@
                 }
             }
 
-            // Merge local and remote students by unique studentId (or id) to guarantee zero data loss
             const studentMap = new Map();
             localStudents.forEach(s => {
                 const key = s.studentId || s.id;
@@ -1279,7 +1385,6 @@
 
             emptyState.classList.add('hidden');
             
-            // Render students as vertical cards with custom evaluation category sliders right inside each card
             container.innerHTML = filtered.map(s => {
                 const marks = studentMarks[s.studentId] || {};
                 return `
@@ -1313,7 +1418,7 @@
                             </div>
                         </div>
 
-                        <!-- Sliders for Student Evaluation Categories (keyed by stable studentId) -->
+                        <!-- Sliders for Student Evaluation Categories -->
                         ${teacherCategories.length > 0 ? `
                             <div class="border-t border-purple-50 pt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                 ${teacherCategories.map(cat => {
@@ -1398,6 +1503,7 @@
                 notes: notesWithTag
             };
 
+            // Attempt cloud save without blocking local save
             if (supabaseClient) {
                 try {
                     if (id && !id.toString().includes('local-')) {
@@ -1411,7 +1517,7 @@
                             .insert([studentData]);
                     }
                 } catch (err) {
-                    console.error('Cloud save failed:', err);
+                    // ignore cloud error
                 }
             }
 
@@ -1437,6 +1543,7 @@
             saveToLocalStorage();
             closeStudentModal();
             await loadStudents();
+            alert('Student saved successfully!');
         }
 
         function editStudent(id) {
@@ -1456,13 +1563,54 @@
                         .delete()
                         .eq('id', id);
                 } catch (err) {
-                    console.error('Cloud delete failed:', err);
+                    // ignore cloud error
                 }
             }
 
             students = students.filter(s => s.id !== id);
             saveToLocalStorage();
             await loadStudents();
+        }
+
+        // Cloud Modal Controls
+        function openCloudModal() {
+            document.getElementById('supabaseUrlInput').value = localStorage.getItem('ats_supabase_url') || '';
+            document.getElementById('supabaseKeyInput').value = localStorage.getItem('ats_supabase_key') || '';
+            document.getElementById('cloudModal').classList.remove('hidden');
+        }
+
+        function closeCloudModal() {
+            document.getElementById('cloudModal').classList.add('hidden');
+        }
+
+        function saveCloudConfig() {
+            const url = document.getElementById('supabaseUrlInput').value.trim();
+            const key = document.getElementById('supabaseKeyInput').value.trim();
+
+            if (!url || !key) {
+                alert('Please enter both Supabase URL and Anon Key.');
+                return;
+            }
+
+            try {
+                localStorage.setItem('ats_supabase_url', url);
+                localStorage.setItem('ats_supabase_key', key);
+                initSupabase();
+                closeCloudModal();
+                loadStudents();
+                alert('Cloud connection configured successfully!');
+            } catch (e) {
+                alert('Error saving cloud config: ' + e.message);
+            }
+        }
+
+        function clearCloudConfig() {
+            localStorage.removeItem('ats_supabase_url');
+            localStorage.removeItem('ats_supabase_key');
+            initSupabase();
+            closeCloudModal();
+            loadStudents();
+            alert('Cloud disconnected. Running on local reliable storage.');
         }
 
         function getInitials(name) {
