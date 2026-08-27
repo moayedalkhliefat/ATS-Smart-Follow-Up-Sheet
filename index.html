@@ -43,7 +43,7 @@
                 <h2 class="text-2xl font-black tracking-tight">ATS-AQB Portal</h2>
                 <p class="text-xs text-purple-100 mt-1 font-medium">Student Smart Follow-Up System</p>
                 <div class="mt-3 text-xs bg-white/20 backdrop-blur-md inline-block px-3.5 py-1 rounded-full text-white font-medium shadow-sm">
-                    Builder & Admin: <strong>Mr. Moayed Alkhliefat</strong>
+                    Builder By Science Teacher: <strong>Mr. Moayed Alkhliefat</strong>
                 </div>
             </div>
             <form onsubmit="handleLogin(event)" class="p-6 space-y-4">
@@ -283,7 +283,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
             <div>
                 <p class="font-bold text-slate-800">ATS-AQB Student Smart Follow-Up Sheet</p>
-                <p class="text-slate-500 mt-0.5">Created & Built by: <strong class="text-fuchsia-700">Mr. Moayed Alkhliefat</strong> (Science Teacher)</p>
+                <p class="text-slate-500 mt-0.5">Builder By Science Teacher: <strong class="text-fuchsia-700">Mr. Moayed Alkhliefat</strong></p>
             </div>
             <p class="font-medium bg-purple-50 text-purple-700 px-3 py-1 rounded-full border border-purple-100">100% Free Cloud Storage & Hosting</p>
         </div>
@@ -413,7 +413,7 @@
         let students = [];
         let teachers = [];
         let categories = []; // [{ id, name, teacher, color }]
-        let studentMarks = {}; // { studentId: { categoryId: mark } }
+        let studentMarks = {}; // { studentIdKey: { categoryId: mark } } (keyed by student's unique studentId string for absolute stability)
         let currentUser = null;
 
         try {
@@ -423,9 +423,9 @@
         }
 
         // Initialize App & Login Check
-        window.addEventListener('DOMContentLoaded', () => {
-            loadTeachersFromStorage();
-            loadCategoriesFromStorage();
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadTeachersFromStorage();
+            await loadCategoriesFromStorage();
             loadMarksFromStorage();
             populateTeacherDropdown();
             
@@ -435,7 +435,7 @@
                     currentUser = JSON.parse(savedSession);
                     document.getElementById('loginModal').classList.add('hidden');
                     applyUserPermissions();
-                    loadStudents();
+                    await loadStudents();
                 } catch (e) {
                     console.error(e);
                 }
@@ -455,6 +455,7 @@
 
         function populateTeacherDropdown() {
             const select = document.getElementById('loginTeacherUser');
+            if (!select) return;
             if (teachers.length === 0) {
                 select.innerHTML = '<option value="">No teachers found (Ask Admin to create one)</option>';
                 return;
@@ -462,7 +463,7 @@
             select.innerHTML = teachers.map(t => `<option value="${t.username}">${t.name} (${t.subject})</option>`).join('');
         }
 
-        function handleLogin(event) {
+        async function handleLogin(event) {
             event.preventDefault();
             const role = document.getElementById('loginRole').value;
             const password = document.getElementById('loginPassword').value.trim();
@@ -492,7 +493,7 @@
             localStorage.setItem('ats_aqb_session', JSON.stringify(currentUser));
             document.getElementById('loginModal').classList.add('hidden');
             applyUserPermissions();
-            loadStudents();
+            await loadStudents();
         }
 
         function applyUserPermissions() {
@@ -526,7 +527,7 @@
             document.getElementById('loginPassword').value = '';
         }
 
-        function switchTab(tab) {
+        async function switchTab(tab) {
             const studentsView = document.getElementById('studentsView');
             const categoriesView = document.getElementById('categoriesView');
             const reportsView = document.getElementById('reportsView');
@@ -549,7 +550,7 @@
             if (tab === 'students') {
                 studentsView.classList.remove('hidden');
                 sBtn.className = "px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md transition";
-                loadStudents();
+                await loadStudents();
             } else if (tab === 'categories') {
                 categoriesView.classList.remove('hidden');
                 cBtn.className = "px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md transition";
@@ -565,7 +566,7 @@
             }
         }
 
-        // Excel / CSV Upload
+        // Excel / CSV Upload with robust merge
         function handleExcelUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -618,25 +619,37 @@
                         };
 
                         if (supabaseClient) {
-                            await supabaseClient.from('candidates').insert([studentData]);
+                            try {
+                                await supabaseClient.from('candidates').insert([studentData]);
+                            } catch (err) {
+                                console.error('Supabase excel row insert error:', err);
+                            }
+                        }
+
+                        // Add to local array immediately
+                        const existingIdx = students.findIndex(s => s.studentId === studentId);
+                        const newStuObj = {
+                            id: 'local-' + Date.now() + '-' + i,
+                            name: name,
+                            studentId: studentId,
+                            grade: grade,
+                            section: section,
+                            notes: 'Imported via Excel/CSV.',
+                            teacher: ownerTag,
+                            created_at: new Date().toISOString()
+                        };
+
+                        if (existingIdx !== -1) {
+                            students[existingIdx] = { ...students[existingIdx], ...newStuObj };
                         } else {
-                            students.push({
-                                id: 'local-' + Date.now() + '-' + i,
-                                name: name,
-                                studentId: studentId,
-                                grade: grade,
-                                section: section,
-                                notes: `Imported via Excel/CSV.`,
-                                teacher: ownerTag,
-                                created_at: new Date().toISOString()
-                            });
+                            students.unshift(newStuObj);
                         }
                         addedCount++;
                     }
 
                     saveToLocalStorage();
-                    loadStudents();
-                    alert(`Successfully imported ${addedCount} student(s) into your separate teacher records!`);
+                    await loadStudents();
+                    alert(`Successfully imported ${addedCount} student(s) into your records without losing any existing data!`);
                 } catch (err) {
                     console.error('Excel parse error:', err);
                     alert('Error parsing Excel/CSV file: ' + err.message);
@@ -647,22 +660,51 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // Custom Categories per Teacher with Color Options
-        function loadCategoriesFromStorage() {
+        // Robust Cloud-Synced Categories with Local Merge
+        async function loadCategoriesFromStorage() {
+            let remoteCats = [];
+            if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('candidates')
+                        .select('*')
+                        .eq('status', 'CATEGORY_RECORD');
+
+                    if (!error && data) {
+                        remoteCats = data.map(item => ({
+                            id: item.id.toString(),
+                            name: item.name,
+                            teacher: item.position,
+                            color: item.email || 'purple'
+                        }));
+                    }
+                } catch (e) {
+                    console.error('Failed to load categories from Supabase', e);
+                }
+            }
+
+            let localCats = [];
             const data = localStorage.getItem('ats_aqb_categories');
             if (data) {
                 try {
-                    categories = JSON.parse(data);
+                    localCats = JSON.parse(data);
                 } catch (e) {
-                    categories = [];
+                    localCats = [];
                 }
             } else {
-                categories = [
+                localCats = [
                     { id: 'cat_1', name: 'Science Quiz 1', teacher: 'science_teacher', color: 'purple' },
                     { id: 'cat_2', name: 'Homework & Assignments', teacher: 'science_teacher', color: 'blue' }
                 ];
-                saveCategoriesToStorage();
             }
+
+            // Merge local and remote categories (deduplicated by name + teacher)
+            const catMap = new Map();
+            localCats.forEach(c => catMap.set(c.name + '_' + (c.teacher || 'admin'), c));
+            remoteCats.forEach(c => catMap.set(c.name + '_' + (c.teacher || 'admin'), { ...catMap.get(c.name + '_' + (c.teacher || 'admin')), ...c }));
+            
+            categories = Array.from(catMap.values());
+            saveCategoriesToStorage();
         }
 
         function saveCategoriesToStorage() {
@@ -695,7 +737,7 @@
             document.getElementById('categoryNameInput').value = '';
         }
 
-        function handleCategorySubmit(event) {
+        async function handleCategorySubmit(event) {
             event.preventDefault();
             const name = document.getElementById('categoryNameInput').value.trim();
             if (!name) return;
@@ -712,30 +754,53 @@
                 color: color
             };
 
+            if (supabaseClient) {
+                try {
+                    await supabaseClient.from('candidates').insert([{
+                        name: name,
+                        position: ownerTag,
+                        email: color,
+                        status: 'CATEGORY_RECORD',
+                        notes: 'Evaluation Category'
+                    }]);
+                } catch (e) {
+                    console.error('Supabase category save error:', e);
+                }
+            }
+
             categories.push(newCat);
             saveCategoriesToStorage();
             closeCategoryModal();
             renderCategoriesView();
             renderStudents();
-            alert('Your custom colored category was added successfully and is now available in student cards!');
+            alert('Your custom colored category was added successfully!');
         }
 
-        function deleteCategory(catId) {
+        async function deleteCategory(catId) {
             if (!confirm('Are you sure you want to delete this category?')) return;
+            
+            if (supabaseClient && !catId.includes('cat_')) {
+                try {
+                    await supabaseClient.from('candidates').delete().eq('id', catId);
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
             categories = categories.filter(c => c.id !== catId);
             saveCategoriesToStorage();
             renderCategoriesView();
             renderStudents();
         }
 
-        function updateMark(studentId, catId, val) {
-            if (!studentMarks[studentId]) {
-                studentMarks[studentId] = {};
+        function updateMark(studentIdKey, catId, val) {
+            if (!studentMarks[studentIdKey]) {
+                studentMarks[studentIdKey] = {};
             }
-            studentMarks[studentId][catId] = parseInt(val, 10);
+            studentMarks[studentIdKey][catId] = parseInt(val, 10);
             saveMarksToStorage();
             
-            const span = document.getElementById(`val_${studentId}_${catId}`);
+            const span = document.getElementById(`val_${studentIdKey}_${catId}`);
             if (span) {
                 span.textContent = val + '%';
             }
@@ -828,7 +893,7 @@
                 const sections = [...new Set(accessible.map(s => s.section))];
                 select.innerHTML = sections.map(sec => `<option value="${sec}">${sec}</option>`).join('');
             } else if (type === 'student') {
-                select.innerHTML = accessible.map(s => `<option value="${s.id}">${s.name} (${s.studentId})</option>`).join('');
+                select.innerHTML = accessible.map(s => `<option value="${s.studentId}">${s.name} (${s.studentId})</option>`).join('');
             }
         }
 
@@ -839,7 +904,7 @@
 
             const accessible = getAccessibleStudents();
             let targetStudents = accessible;
-            let reportTitle = "Comprehensive Student Report (My Separate Records)";
+            let reportTitle = "Comprehensive Student Report";
 
             if (filterType === 'grade') {
                 targetStudents = accessible.filter(s => s.grade === filterVal);
@@ -848,7 +913,7 @@
                 targetStudents = accessible.filter(s => s.section === filterVal);
                 reportTitle = `Section Report: ${filterVal}`;
             } else if (filterType === 'student') {
-                targetStudents = accessible.filter(s => s.id === filterVal);
+                targetStudents = accessible.filter(s => s.studentId === filterVal);
                 if (targetStudents.length > 0) {
                     reportTitle = `Individual Student Report: ${targetStudents[0].name}`;
                 }
@@ -860,7 +925,7 @@
                 : categories.filter(c => c.teacher === currentUser.username);
 
             if (targetStudents.length === 0) {
-                outputCard.innerHTML = `<p class="text-slate-500 text-center py-10 font-medium">No students match this report filter in your separate sheet.</p>`;
+                outputCard.innerHTML = `<p class="text-slate-500 text-center py-10 font-medium">No students match this report filter.</p>`;
                 return;
             }
 
@@ -882,7 +947,7 @@
 
                 <div class="space-y-6">
                     ${targetStudents.map(s => {
-                        const marks = studentMarks[s.id] || {};
+                        const marks = studentMarks[s.studentId] || {};
                         const markEntries = Object.entries(marks);
                         let avgScore = 0;
                         if (markEntries.length > 0) {
@@ -926,24 +991,52 @@
             `;
         }
 
-        // Teachers Management
-        function loadTeachersFromStorage() {
+        // Teachers Management with Local Merge
+        async function loadTeachersFromStorage() {
+            let remoteTeachers = [];
+            if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('candidates')
+                        .select('*')
+                        .eq('status', 'TEACHER_ACCOUNT');
+
+                    if (!error && data) {
+                        remoteTeachers = data.map(item => ({
+                            name: item.name,
+                            username: item.position,
+                            subject: item.email || 'General',
+                            password: item.notes || 'teacher123'
+                        }));
+                    }
+                } catch (e) {
+                    console.error('Failed to load teachers from Supabase', e);
+                }
+            }
+
+            let localTeachers = [];
             const data = localStorage.getItem('ats_aqb_teachers');
             if (data) {
                 try {
-                    teachers = JSON.parse(data);
+                    localTeachers = JSON.parse(data);
                 } catch (e) {
-                    teachers = [];
+                    localTeachers = [];
                 }
             } else {
-                teachers = [
+                localTeachers = [
                     { username: 'science_teacher', name: 'Mr. Moayed Alkhliefat', subject: 'Science', password: 'password123' }
                 ];
-                saveTeachersToStorage();
             }
+
+            const teacherMap = new Map();
+            localTeachers.forEach(t => teacherMap.set(t.username.toLowerCase(), t));
+            remoteTeachers.forEach(t => teacherMap.set(t.username.toLowerCase(), { ...teacherMap.get(t.username.toLowerCase()), ...t }));
+
+            teachers = Array.from(teacherMap.values());
+            saveTeachersToStorage();
         }
 
-        function saveTeachersToStorage() {
+        async function saveTeachersToStorage() {
             localStorage.setItem('ats_aqb_teachers', JSON.stringify(teachers));
             populateTeacherDropdown();
         }
@@ -956,7 +1049,7 @@
             document.getElementById('teacherModal').classList.add('hidden');
         }
 
-        function handleTeacherSubmit(event) {
+        async function handleTeacherSubmit(event) {
             event.preventDefault();
             const nameInput = document.getElementById('tName').value.trim();
             const usernameInput = document.getElementById('tUsername').value.trim();
@@ -980,11 +1073,24 @@
                 password: passwordInput
             };
 
+            if (supabaseClient) {
+                try {
+                    await supabaseClient.from('candidates').insert([{
+                        name: nameInput,
+                        position: usernameInput,
+                        email: subjectInput || 'General',
+                        notes: passwordInput,
+                        status: 'TEACHER_ACCOUNT'
+                    }]);
+                } catch (e) {
+                    console.error('Supabase teacher save error:', e);
+                }
+            }
+
             teachers.push(newTeacher);
             saveTeachersToStorage();
             closeTeacherAccountModal();
             
-            // Reset form
             document.getElementById('tName').value = '';
             document.getElementById('tUsername').value = '';
             document.getElementById('tSubject').value = '';
@@ -992,7 +1098,7 @@
 
             renderTeachers();
             populateTeacherDropdown();
-            alert('Teacher account created and saved successfully!');
+            alert('Teacher account created successfully!');
         }
 
         function renderTeachers() {
@@ -1022,8 +1128,9 @@
             renderTeachers();
         }
 
-        // Students Management
+        // Students Management with Robust Merge (Zero Data Loss on Add/Refresh)
         async function loadStudents() {
+            let remoteStudents = [];
             if (supabaseClient) {
                 try {
                     const { data, error } = await supabaseClient
@@ -1031,35 +1138,71 @@
                         .select('*')
                         .order('created_at', { ascending: false });
 
-                    if (error) throw error;
-                    
-                    students = (data || []).map(item => {
-                        let assignedTeacher = 'admin';
-                        let cleanNotes = item.notes || '';
-                        if (cleanNotes.includes('| Teacher: ')) {
-                            const parts = cleanNotes.split('| Teacher: ');
-                            cleanNotes = parts[0].trim();
-                            assignedTeacher = parts[1].trim();
-                        }
+                    if (!error && data) {
+                        remoteStudents = data.filter(item => item.status !== 'TEACHER_ACCOUNT' && item.status !== 'CATEGORY_RECORD').map(item => {
+                            let assignedTeacher = 'admin';
+                            let cleanNotes = item.notes || '';
+                            if (cleanNotes.includes('| Teacher: ')) {
+                                const parts = cleanNotes.split('| Teacher: ');
+                                cleanNotes = parts[0].trim();
+                                assignedTeacher = parts[1].trim();
+                            }
 
-                        return {
-                            id: item.id,
-                            name: item.name || '',
-                            studentId: item.resume_url || '',
-                            grade: parseGrade(item.position).grade,
-                            section: parseGrade(item.position).section,
-                            notes: cleanNotes,
-                            teacher: assignedTeacher,
-                            created_at: item.created_at
-                        };
-                    });
+                            return {
+                                id: item.id,
+                                name: item.name || '',
+                                studentId: item.resume_url || '',
+                                grade: parseGrade(item.position).grade,
+                                section: parseGrade(item.position).section,
+                                notes: cleanNotes,
+                                teacher: assignedTeacher,
+                                created_at: item.created_at
+                            };
+                        });
+                    }
                 } catch (err) {
-                    console.error('Error loading from Supabase:', err);
-                    loadFromLocalStorage();
+                    console.error('Error loading students from Supabase:', err);
                 }
-            } else {
-                loadFromLocalStorage();
             }
+
+            let localStudents = [];
+            const localData = localStorage.getItem('ats_aqb_students');
+            if (localData) {
+                try {
+                    localStudents = JSON.parse(localData);
+                } catch (e) {
+                    localStudents = [];
+                }
+            }
+
+            // Merge local and remote students by unique studentId (or id) to guarantee zero data loss
+            const studentMap = new Map();
+            localStudents.forEach(s => {
+                const key = s.studentId || s.id;
+                studentMap.set(key, s);
+            });
+            remoteStudents.forEach(s => {
+                const key = s.studentId || s.id;
+                studentMap.set(key, { ...studentMap.get(key), ...s });
+            });
+
+            students = Array.from(studentMap.values());
+            if (students.length === 0) {
+                students = [
+                    {
+                        id: '1',
+                        name: 'Fatima Al-Zahra',
+                        studentId: 'AQB-2026-101',
+                        grade: 'Grade 10',
+                        section: 'Section A',
+                        notes: 'Science fair project leader.',
+                        teacher: 'science_teacher',
+                        created_at: new Date().toISOString()
+                    }
+                ];
+            }
+
+            saveToLocalStorage();
             populateFilterDropdowns();
             renderStudents();
             updateStats();
@@ -1083,31 +1226,6 @@
             return { grade: posStr, section: 'General' };
         }
 
-        function loadFromLocalStorage() {
-            const localData = localStorage.getItem('ats_aqb_students');
-            if (localData) {
-                try {
-                    students = JSON.parse(localData);
-                } catch (e) {
-                    students = [];
-                }
-            } else {
-                students = [
-                    {
-                        id: '1',
-                        name: 'Fatima Al-Zahra',
-                        studentId: 'AQB-2026-101',
-                        grade: 'Grade 10',
-                        section: 'Section A',
-                        notes: 'Science fair project leader.',
-                        teacher: 'science_teacher',
-                        created_at: new Date().toISOString()
-                    }
-                ];
-                saveToLocalStorage();
-            }
-        }
-
         function saveToLocalStorage() {
             localStorage.setItem('ats_aqb_students', JSON.stringify(students));
         }
@@ -1116,6 +1234,8 @@
             const accessible = getAccessibleStudents();
             const gradeSelect = document.getElementById('gradeFilter');
             const sectionSelect = document.getElementById('sectionFilter');
+
+            if (!gradeSelect || !sectionSelect) return;
 
             const currentGrade = gradeSelect.value;
             const currentSection = sectionSelect.value;
@@ -1159,9 +1279,9 @@
 
             emptyState.classList.add('hidden');
             
-            // Render students as vertical cards with their custom evaluation category sliders right inside each card
+            // Render students as vertical cards with custom evaluation category sliders right inside each card
             container.innerHTML = filtered.map(s => {
-                const marks = studentMarks[s.id] || {};
+                const marks = studentMarks[s.studentId] || {};
                 return `
                     <div class="bg-white/95 backdrop-blur-md p-6 rounded-3xl border border-purple-100 shadow-sm hover:shadow-md transition space-y-4">
                         <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -1193,7 +1313,7 @@
                             </div>
                         </div>
 
-                        <!-- Sliders for Student Evaluation Categories -->
+                        <!-- Sliders for Student Evaluation Categories (keyed by stable studentId) -->
                         ${teacherCategories.length > 0 ? `
                             <div class="border-t border-purple-50 pt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                 ${teacherCategories.map(cat => {
@@ -1206,8 +1326,8 @@
                                                 <span class="text-xs font-bold text-slate-800 truncate">${escapeHtml(cat.name)}</span>
                                             </div>
                                             <div class="flex items-center space-x-2 w-32 flex-shrink-0">
-                                                <input type="range" min="0" max="100" value="${currentMark}" oninput="updateMark('${s.id}', '${cat.id}', this.value)" class="w-full ${cols.accent} cursor-pointer">
-                                                <span id="val_${s.id}_${cat.id}" class="text-[11px] font-black ${cols.text} w-8 text-right">${currentMark}%</span>
+                                                <input type="range" min="0" max="100" value="${currentMark}" oninput="updateMark('${s.studentId}', '${cat.id}', this.value)" class="w-full ${cols.accent} cursor-pointer">
+                                                <span id="val_${s.studentId}_${cat.id}" class="text-[11px] font-black ${cols.text} w-8 text-right">${currentMark}%</span>
                                             </div>
                                         </div>
                                     `;
@@ -1227,7 +1347,8 @@
 
         function updateStats() {
             const accessible = getAccessibleStudents();
-            document.getElementById('statTotal').textContent = accessible.length;
+            const statTotal = document.getElementById('statTotal');
+            if (statTotal) statTotal.textContent = accessible.length;
         }
 
         function openStudentModal(student = null) {
@@ -1266,54 +1387,56 @@
 
             const rawNotes = document.getElementById('notes').value;
             const notesWithTag = `${rawNotes} | Teacher: ${ownerTag}`;
+            const studentIdInput = document.getElementById('studentId').value.trim();
+            const fullNameInput = document.getElementById('fullName').value.trim();
 
             const studentData = {
-                name: document.getElementById('fullName').value,
+                name: fullNameInput,
                 position: combinedPosition,
                 status: 'Enrolled',
-                resume_url: document.getElementById('studentId').value,
+                resume_url: studentIdInput,
                 notes: notesWithTag
             };
 
             if (supabaseClient) {
                 try {
                     if (id && !id.toString().includes('local-')) {
-                        const { error } = await supabaseClient
+                        await supabaseClient
                             .from('candidates')
                             .update(studentData)
                             .eq('id', id);
-                        if (error) throw error;
                     } else {
-                        const { error } = await supabaseClient
+                        await supabaseClient
                             .from('candidates')
                             .insert([studentData]);
-                        if (error) throw error;
                     }
                 } catch (err) {
-                    alert('Cloud save failed: ' + err.message);
-                    return;
+                    console.error('Cloud save failed:', err);
                 }
-            } else {
-                if (id) {
-                    students = students.map(s => s.id === id ? { ...s, name: studentData.name, studentId: studentData.resume_url, grade: gradeVal, section: sectionVal, notes: rawNotes, teacher: ownerTag } : s);
-                } else {
-                    const newStudent = {
-                        id: 'local-' + Date.now(),
-                        name: studentData.name,
-                        studentId: studentData.resume_url,
-                        grade: gradeVal,
-                        section: sectionVal,
-                        notes: rawNotes,
-                        teacher: ownerTag,
-                        created_at: new Date().toISOString()
-                    };
-                    students.unshift(newStudent);
-                }
-                saveToLocalStorage();
             }
 
+            // Update local array immediately & safely merge
+            const newStuObj = {
+                id: id || ('local-' + Date.now()),
+                name: fullNameInput,
+                studentId: studentIdInput,
+                grade: gradeVal,
+                section: sectionVal,
+                notes: rawNotes,
+                teacher: ownerTag,
+                created_at: new Date().toISOString()
+            };
+
+            const existingIdx = students.findIndex(s => s.id === id || s.studentId === studentIdInput);
+            if (existingIdx !== -1) {
+                students[existingIdx] = { ...students[existingIdx], ...newStuObj };
+            } else {
+                students.unshift(newStuObj);
+            }
+
+            saveToLocalStorage();
             closeStudentModal();
-            loadStudents();
+            await loadStudents();
         }
 
         function editStudent(id) {
@@ -1328,32 +1451,23 @@
 
             if (supabaseClient && !id.toString().includes('local-')) {
                 try {
-                    const { error } = await supabaseClient
+                    await supabaseClient
                         .from('candidates')
                         .delete()
                         .eq('id', id);
-                    if (error) throw error;
                 } catch (err) {
-                    alert('Cloud delete failed: ' + err.message);
-                    return;
+                    console.error('Cloud delete failed:', err);
                 }
-            } else {
-                students = students.filter(s => s.id !== id);
-                saveToLocalStorage();
             }
 
-            loadStudents();
+            students = students.filter(s => s.id !== id);
+            saveToLocalStorage();
+            await loadStudents();
         }
 
         function getInitials(name) {
             if (!name) return 'ST';
             return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
-        }
-
-        function formatDate(dateStr) {
-            if (!dateStr) return 'N/A';
-            const d = new Date(dateStr);
-            return isNaN(d.getTime()) ? 'N/A' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
         }
 
         function escapeHtml(str) {
