@@ -322,14 +322,20 @@
         let supabaseClient = null;
         let isCloudMode = false;
 
-        // Check local storage for Supabase credentials on load
+        // Default Supabase credentials provided by user
+        const DEFAULT_SUPABASE_URL = 'https://idfwwncwtwkwxtwpkato.supabase.co';
+        const DEFAULT_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkZnd3bmN3dHdrd3h0d3BrYXRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTgyMzEsImV4cCI6MjEwMzM3NDIzMX0.bG5xiin2OJAn69rqIA1CSohQIsC3nDxeBo3ESkaq7oE';
+
+        // Check local storage or defaults for Supabase credentials on load
         function initApp() {
-            const savedUrl = localStorage.getItem('ats_supabase_url');
-            const savedKey = localStorage.getItem('ats_supabase_key');
+            const savedUrl = localStorage.getItem('ats_supabase_url') || DEFAULT_SUPABASE_URL;
+            const savedKey = localStorage.getItem('ats_supabase_key') || DEFAULT_SUPABASE_KEY;
 
             if (savedUrl && savedKey) {
                 try {
-                    supabaseClient = supabase.createClient(savedUrl, savedKey);
+                    // Clean up URL if user pasted trailing /rest/v1/ or slashes
+                    const cleanUrl = savedUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
+                    supabaseClient = supabase.createClient(cleanUrl, savedKey);
                     isCloudMode = true;
                     updateCloudBadge(true);
                 } catch (e) {
