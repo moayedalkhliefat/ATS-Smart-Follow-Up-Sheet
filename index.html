@@ -478,7 +478,7 @@
             }
         }
 
-        // Initialize App & Login Check
+        // Initialize App & Auto-Login as Admin (Mr. Moayed Alkhliefat) for seamless access
         window.addEventListener('DOMContentLoaded', async () => {
             initSupabase();
             await loadTeachersFromStorage();
@@ -490,13 +490,20 @@
             if (savedSession) {
                 try {
                     currentUser = JSON.parse(savedSession);
-                    document.getElementById('loginModal').classList.add('hidden');
-                    applyUserPermissions();
-                    await loadStudents();
                 } catch (e) {
-                    console.error(e);
+                    currentUser = null;
                 }
             }
+
+            if (!currentUser) {
+                currentUser = { role: 'admin', username: 'moayed alkhliefat', name: 'Mr. Moayed Alkhliefat (Admin)' };
+                localStorage.setItem('ats_aqb_session', JSON.stringify(currentUser));
+            }
+
+            const loginModal = document.getElementById('loginModal');
+            if (loginModal) loginModal.classList.add('hidden');
+            applyUserPermissions();
+            await loadStudents();
         });
 
         function toggleLoginInputs() {
