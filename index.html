@@ -10,8 +10,10 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Supabase JS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- SheetJS for Excel / CSV Upload -->
+    <!-- SheetJS for Excel / CSV Export & Upload -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- jsPDF & html2canvas for PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -162,22 +164,22 @@
                     
                     <button onclick="document.getElementById('excelUploadInput').click()" title="Upload Excel or CSV" class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 rounded-xl hover:bg-purple-100 transition shadow-sm">
                         <i data-lucide="file-spreadsheet" class="w-4 h-4 text-fuchsia-600"></i>
-                        <span>Excel</span>
+                        <span>Excel Upload</span>
                     </button>
 
-                    <button onclick="exportJSONBackup()" title="Backup All Data to JSON" class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition shadow-sm">
-                        <i data-lucide="save" class="w-4 h-4 text-emerald-600"></i>
+                    <button onclick="exportExcelFile()" title="Export Data to Excel Spreadsheet (.xlsx)" class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition shadow-sm">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
+                        <span>Export Excel</span>
+                    </button>
+
+                    <button onclick="exportJSONBackup()" title="Backup All Data to JSON" class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 rounded-xl hover:bg-purple-100 transition shadow-sm">
+                        <i data-lucide="save" class="w-4 h-4 text-purple-600"></i>
                         <span>Backup</span>
                     </button>
 
                     <button onclick="document.getElementById('jsonRestoreInput').click()" title="Restore Data from JSON" class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-xl hover:bg-amber-100 transition shadow-sm">
                         <i data-lucide="upload" class="w-4 h-4 text-amber-600"></i>
                         <span>Restore</span>
-                    </button>
-
-                    <button onclick="exportCSV()" class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition shadow-sm">
-                        <i data-lucide="download" class="w-4 h-4 text-fuchsia-600"></i>
-                        <span>CSV</span>
                     </button>
 
                     <button onclick="openStudentModal()" class="inline-flex items-center space-x-2 px-4 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-95 transition shadow-lg shadow-fuchsia-500/20 rounded-xl">
@@ -238,19 +240,27 @@
                     <h2 class="text-lg font-black text-slate-900">Academic & Follow-Up Reports</h2>
                     <p class="text-xs text-slate-500 mt-0.5 font-medium">Generate comprehensive summary reports filtered by Student, Grade, or Section.</p>
                 </div>
-                <div class="flex items-center gap-3 w-full md:w-auto">
-                    <select id="reportFilterType" onchange="updateReportFilterOptions()" class="px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 font-medium">
+                <div class="flex items-center gap-2 w-full md:w-auto flex-wrap">
+                    <select id="reportFilterType" onchange="updateReportFilterOptions()" class="px-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 font-medium">
                         <option value="all">All Students Summary</option>
                         <option value="grade">Filter by Grade</option>
                         <option value="section">Filter by Section</option>
                         <option value="student">Filter by Individual Student</option>
                     </select>
-                    <select id="reportFilterValue" onchange="renderReports()" class="px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 font-medium hidden">
+                    <select id="reportFilterValue" onchange="renderReports()" class="px-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 font-medium hidden">
                         <!-- Options filled dynamically -->
                     </select>
-                    <button onclick="window.print()" class="inline-flex items-center space-x-2 px-4 py-2.5 text-sm font-bold text-purple-700 bg-purple-50 border border-purple-200 rounded-xl hover:bg-purple-100 transition shadow-sm">
+                    <button onclick="exportReportPDF()" class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-bold text-white bg-gradient-to-r from-red-600 to-pink-600 rounded-xl hover:opacity-95 transition shadow-sm">
+                        <i data-lucide="file-text" class="w-4 h-4"></i>
+                        <span>Export PDF</span>
+                    </button>
+                    <button onclick="exportReportExcel()" class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl hover:opacity-95 transition shadow-sm">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                        <span>Export Excel</span>
+                    </button>
+                    <button onclick="window.print()" class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 rounded-xl hover:bg-purple-100 transition shadow-sm">
                         <i data-lucide="printer" class="w-4 h-4"></i>
-                        <span>Print Report</span>
+                        <span>Print</span>
                     </button>
                 </div>
             </div>
@@ -619,7 +629,7 @@
             }
         }
 
-        // Ultra-Robust Excel / CSV Upload Parser (Handles multiple column name variations and row formats)
+        // Ultra-Robust Excel / CSV Upload Parser (Handles multiple column name variations and raw array rows)
         function handleExcelUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -638,122 +648,130 @@
                         return;
                     }
 
-                    // Find header row or fallback to index 0
-                    let headerRowIdx = 0;
+                    // Locate header row by checking for common column names
+                    let headerRowIdx = -1;
                     let headers = [];
                     
-                    for (let r = 0; r < Math.min(jsonRows.length, 5); r++) {
+                    for (let r = 0; r < Math.min(jsonRows.length, 10); r++) {
                         const row = jsonRows[r];
                         if (!row) continue;
                         const rowStr = row.map(cell => cell ? cell.toString().toLowerCase() : '').join(' ');
-                        if (rowStr.includes('name') || rowStr.includes('student') || rowStr.includes('id') || rowStr.includes('grade')) {
+                        if (rowStr.includes('name') || rowStr.includes('student') || rowStr.includes('id') || rowStr.includes('grade') || rowStr.includes('section')) {
                             headerRowIdx = r;
                             headers = row.map(h => h ? h.toString().toLowerCase().trim() : '');
                             break;
                         }
                     }
 
-                    if (headers.length === 0 && jsonRows.length > 0) {
-                        headers = jsonRows[0].map(h => h ? h.toString().toLowerCase().trim() : '');
-                    }
-
-                    // Flexible column index matching
-                    let nameIdx = headers.findIndex(h => h.includes('name') || h.includes('student') || h.includes('full'));
-                    let idIdx = headers.findIndex(h => h.includes('id') || h.includes('number') || h.includes('no') || h.includes('code'));
-                    let gradeIdx = headers.findIndex(h => h.includes('grade') || h.includes('class') || h.includes('level') || h.includes('year'));
-                    let sectionIdx = headers.findIndex(h => h.includes('section') || h.includes('group') || h.includes('div') || h.includes('class'));
-                    let notesIdx = headers.findIndex(h => h.includes('note') || h.includes('remark') || h.includes('comment'));
-
-                    // If header match failed or data starts immediately without header
-                    if (nameIdx === -1) nameIdx = 0;
-                    if (idIdx === -1) idIdx = 1;
-                    if (gradeIdx === -1) gradeIdx = 2;
-                    if (sectionIdx === -1) sectionIdx = 3;
-
                     const ownerTag = (currentUser && currentUser.role === 'teacher') ? currentUser.username : 'admin';
                     let addedCount = 0;
 
-                    // Parse data rows starting after headerRowIdx
-                    for (let i = headerRowIdx + 1; i < jsonRows.length; i++) {
-                        const row = jsonRows[i];
-                        if (!row || row.length === 0) continue;
+                    if (headerRowIdx !== -1 && headers.length > 0) {
+                        // Flexible column index matching from header
+                        let nameIdx = headers.findIndex(h => h.includes('name') || h.includes('student') || h.includes('full'));
+                        let idIdx = headers.findIndex(h => h.includes('id') || h.includes('number') || h.includes('no') || h.includes('code'));
+                        let gradeIdx = headers.findIndex(h => h.includes('grade') || h.includes('class') || h.includes('level') || h.includes('year'));
+                        let sectionIdx = headers.findIndex(h => h.includes('section') || h.includes('group') || h.includes('div') || h.includes('class'));
+                        let notesIdx = headers.findIndex(h => h.includes('note') || h.includes('remark') || h.includes('comment'));
 
-                        let name = row[nameIdx] !== undefined ? row[nameIdx].toString().trim() : '';
-                        
-                        // If name is empty, try scanning all cells in row for a non-empty string
-                        if (!name) {
-                            for (let c = 0; c < row.length; c++) {
-                                const val = row[c] ? row[c].toString().trim() : '';
-                                if (val &&isNaN(val) && val.length > 2) {
-                                    name = val;
-                                    break;
+                        if (nameIdx === -1) nameIdx = 0;
+                        if (idIdx === -1) idIdx = 1;
+                        if (gradeIdx === -1) gradeIdx = 2;
+                        if (sectionIdx === -1) sectionIdx = 3;
+
+                        for (let i = headerRowIdx + 1; i < jsonRows.length; i++) {
+                            const row = jsonRows[i];
+                            if (!row || row.length === 0) continue;
+
+                            let name = row[nameIdx] !== undefined && row[nameIdx] !== null ? row[nameIdx].toString().trim() : '';
+                            if (!name) {
+                                for (let c = 0; c < row.length; c++) {
+                                    const val = row[c] ? row[c].toString().trim() : '';
+                                    if (val && isNaN(val) && val.length > 1) {
+                                        name = val;
+                                        break;
+                                    }
                                 }
                             }
-                        }
+                            if (!name) continue;
 
-                        if (!name) continue;
-
-                        const studentId = (row[idIdx] !== undefined && row[idIdx] !== null && row[idIdx].toString().trim() !== '') 
-                            ? row[idIdx].toString().trim() 
-                            : `AQB-${Date.now()}-${i}`;
-                        
-                        const grade = (row[gradeIdx] !== undefined && row[gradeIdx] !== null && row[gradeIdx].toString().trim() !== '') 
-                            ? row[gradeIdx].toString().trim() 
-                            : 'Grade 10';
+                            const studentId = (row[idIdx] !== undefined && row[idIdx] !== null && row[idIdx].toString().trim() !== '') 
+                                ? row[idIdx].toString().trim() 
+                                : `AQB-${Date.now()}-${i}`;
                             
-                        const section = (row[sectionIdx] !== undefined && row[sectionIdx] !== null && row[sectionIdx].toString().trim() !== '') 
-                            ? row[sectionIdx].toString().trim() 
-                            : 'Section A';
+                            const grade = (row[gradeIdx] !== undefined && row[gradeIdx] !== null && row[gradeIdx].toString().trim() !== '') 
+                                ? row[gradeIdx].toString().trim() 
+                                : 'Grade 10';
+                                
+                            const section = (row[sectionIdx] !== undefined && row[sectionIdx] !== null && row[sectionIdx].toString().trim() !== '') 
+                                ? row[sectionIdx].toString().trim() 
+                                : 'Section A';
 
-                        const fileNotes = (notesIdx !== -1 && row[notesIdx]) ? row[notesIdx].toString().trim() : 'Imported via Excel/CSV.';
+                            const fileNotes = (notesIdx !== -1 && row[notesIdx]) ? row[notesIdx].toString().trim() : 'Imported via Excel/CSV.';
 
-                        const studentData = {
-                            name: name,
-                            position: `${grade} | ${section}`,
-                            status: 'Enrolled',
-                            resume_url: studentId,
-                            notes: `${fileNotes} | Teacher: ${ownerTag}`
-                        };
+                            const studentData = {
+                                name: name,
+                                position: `${grade} | ${section}`,
+                                status: 'Enrolled',
+                                resume_url: studentId,
+                                notes: `${fileNotes} | Teacher: ${ownerTag}`
+                            };
 
-                        if (supabaseClient) {
-                            try {
-                                await supabaseClient.from('candidates').insert([studentData]);
-                            } catch (err) {
-                                // ignore cloud error so local save always succeeds
+                            if (supabaseClient) {
+                                try {
+                                    await supabaseClient.from('candidates').insert([studentData]);
+                                } catch (err) {}
                             }
+
+                            const existingIdx = students.findIndex(s => s.studentId === studentId || s.name.toLowerCase() === name.toLowerCase());
+                            const newStuObj = {
+                                id: 'local-' + Date.now() + '-' + i,
+                                name: name,
+                                studentId: studentId,
+                                grade: grade,
+                                section: section,
+                                notes: fileNotes,
+                                teacher: ownerTag,
+                                created_at: new Date().toISOString()
+                            };
+
+                            if (existingIdx !== -1) {
+                                students[existingIdx] = { ...students[existingIdx], ...newStuObj };
+                            } else {
+                                students.unshift(newStuObj);
+                            }
+                            addedCount++;
                         }
-
-                        const existingIdx = students.findIndex(s => s.studentId === studentId || s.name.toLowerCase() === name.toLowerCase());
-                        const newStuObj = {
-                            id: 'local-' + Date.now() + '-' + i,
-                            name: name,
-                            studentId: studentId,
-                            grade: grade,
-                            section: section,
-                            notes: fileNotes,
-                            teacher: ownerTag,
-                            created_at: new Date().toISOString()
-                        };
-
-                        if (existingIdx !== -1) {
-                            students[existingIdx] = { ...students[existingIdx], ...newStuObj };
-                        } else {
-                            students.unshift(newStuObj);
-                        }
-                        addedCount++;
-                    }
-
-                    if (addedCount === 0) {
-                        // Fallback: read row 0 if no header matched
+                    } else {
+                        // Direct sequential parse (Col 0: Name, Col 1: ID, Col 2: Grade, Col 3: Section)
                         for (let i = 0; i < jsonRows.length; i++) {
                             const row = jsonRows[i];
                             if (!row || row.length === 0) continue;
-                            const name = row[0] ? row[0].toString().trim() : '';
+                            
+                            let name = row[0] !== undefined && row[0] !== null ? row[0].toString().trim() : '';
                             if (!name) continue;
-                            const studentId = row[1] ? row[1].toString().trim() : `AQB-${Date.now()}-${i}`;
-                            const grade = row[2] ? row[2].toString().trim() : 'Grade 10';
-                            const section = row[3] ? row[3].toString().trim() : 'Section A';
+                            // Skip if header-like row
+                            if (name.toLowerCase().includes('name') || name.toLowerCase().includes('student')) continue;
 
+                            const studentId = (row[1] !== undefined && row[1] !== null && row[1].toString().trim() !== '') ? row[1].toString().trim() : `AQB-${Date.now()}-${i}`;
+                            const grade = (row[2] !== undefined && row[2] !== null && row[2].toString().trim() !== '') ? row[2].toString().trim() : 'Grade 10';
+                            const section = (row[3] !== undefined && row[3] !== null && row[3].toString().trim() !== '') ? row[3].toString().trim() : 'Section A';
+
+                            const studentData = {
+                                name: name,
+                                position: `${grade} | ${section}`,
+                                status: 'Enrolled',
+                                resume_url: studentId,
+                                notes: `Imported via Excel/CSV | Teacher: ${ownerTag}`
+                            };
+
+                            if (supabaseClient) {
+                                try {
+                                    await supabaseClient.from('candidates').insert([studentData]);
+                                } catch (err) {}
+                            }
+
+                            const existingIdx = students.findIndex(s => s.studentId === studentId || s.name.toLowerCase() === name.toLowerCase());
                             const newStuObj = {
                                 id: 'local-' + Date.now() + '-' + i,
                                 name: name,
@@ -764,14 +782,19 @@
                                 teacher: ownerTag,
                                 created_at: new Date().toISOString()
                             };
-                            students.unshift(newStuObj);
+
+                            if (existingIdx !== -1) {
+                                students[existingIdx] = { ...students[existingIdx], ...newStuObj };
+                            } else {
+                                students.unshift(newStuObj);
+                            }
                             addedCount++;
                         }
                     }
 
                     saveToLocalStorage();
                     await loadStudents();
-                    alert(`Successfully imported ${addedCount} student name(s) into your records without any data loss!`);
+                    alert(`Successfully imported ${addedCount} student record(s) from Excel/CSV file!`);
                 } catch (err) {
                     console.error('Excel parse error:', err);
                     alert('Error parsing Excel/CSV file: ' + err.message);
@@ -780,6 +803,84 @@
                 }
             };
             reader.readAsArrayBuffer(file);
+        }
+
+        // Export Data to Excel File (.xlsx)
+        function exportExcelFile() {
+            const accessible = getAccessibleStudents();
+            if (accessible.length === 0) {
+                alert('No students to export.');
+                return;
+            }
+            const dataToExport = accessible.map(s => ({
+                'Student Name': s.name,
+                'Student ID': s.studentId,
+                'Grade': s.grade,
+                'Section': s.section,
+                'Follow-Up Notes': s.notes || '',
+                'Added Date': s.created_at ? new Date(s.created_at).toLocaleDateString() : ''
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
+            XLSX.writeFile(workbook, `ATS_AQB_Students_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        // Export Report as PDF
+        function exportReportPDF() {
+            const element = document.getElementById('reportOutputCard');
+            if (!element) return;
+            const opt = {
+                margin:       10,
+                filename:     `ATS_AQB_Report_${new Date().toISOString().slice(0,10)}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().from(element).set(opt).save();
+        }
+
+        // Export Report as Excel
+        function exportReportExcel() {
+            const accessible = getAccessibleStudents();
+            const filterType = document.getElementById('reportFilterType').value;
+            const filterVal = document.getElementById('reportFilterValue').value;
+
+            let targetStudents = accessible;
+            if (filterType === 'grade') targetStudents = accessible.filter(s => s.grade === filterVal);
+            else if (filterType === 'section') targetStudents = accessible.filter(s => s.section === filterVal);
+            else if (filterType === 'student') targetStudents = accessible.filter(s => s.studentId === filterVal);
+
+            if (targetStudents.length === 0) {
+                alert('No data to export for this report.');
+                return;
+            }
+
+            const ownerTag = (currentUser && currentUser.role === 'teacher') ? currentUser.username : 'admin';
+            const teacherCategories = (currentUser && currentUser.role === 'admin') 
+                ? categories 
+                : categories.filter(c => c.teacher === ownerTag);
+
+            const reportRows = targetStudents.map(s => {
+                const marks = studentMarks[s.studentId] || {};
+                let rowObj = {
+                    'Student Name': s.name,
+                    'Student ID': s.studentId,
+                    'Grade': s.grade,
+                    'Section': s.section
+                };
+                teacherCategories.forEach(cat => {
+                    rowObj[cat.name] = (marks[cat.id] !== undefined ? marks[cat.id] + '%' : 'Not Graded');
+                });
+                rowObj['Notes'] = s.notes || '';
+                return rowObj;
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(reportRows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Report Summary");
+            XLSX.writeFile(workbook, `ATS_AQB_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 
         // JSON Backup & Restore for 100% Data Preservation across PCs/Sessions
@@ -1691,32 +1792,6 @@
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-        }
-
-        function exportCSV() {
-            const accessible = getAccessibleStudents();
-            if (accessible.length === 0) {
-                alert('No students to export.');
-                return;
-            }
-            const headers = ['Student Name', 'Student ID', 'Grade', 'Section', 'Notes', 'Added Date'];
-            const rows = accessible.map(s => [
-                `"${(s.name || '').replace(/"/g, '""')}"`,
-                `"${(s.studentId || '').replace(/"/g, '""')}"`,
-                `"${(s.grade || '').replace(/"/g, '""')}"`,
-                `"${(s.section || '').replace(/"/g, '""')}"`,
-                `"${(s.notes || '').replace(/"/g, '""')}"`,
-                `"${s.created_at || ''}"`
-            ]);
-
-            const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement('a');
-            link.setAttribute('href', encodedUri);
-            link.setAttribute('download', 'ats_aqb_teacher_records.csv');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
         }
     </script>
 </body>
