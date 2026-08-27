@@ -16,11 +16,11 @@
                 extend: {
                     colors: {
                         brand: {
-                            50: '#eef2ff',
-                            100: '#e0e7ff',
-                            500: '#6366f1',
-                            600: '#4f46e5',
-                            700: '#4338ca',
+                            50: '#fdf4ff',
+                            100: '#fae8ff',
+                            500: '#d946ef',
+                            600: '#c026d3',
+                            700: '#a21caf',
                         }
                     }
                 }
@@ -28,78 +28,82 @@
         }
     </script>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans">
+<body class="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-slate-800 min-h-screen flex flex-col font-sans">
 
     <!-- LOGIN MODAL (Required on load if not logged in) -->
-    <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform transition-all">
-            <div class="bg-gradient-to-r from-indigo-900 to-indigo-800 px-6 py-6 text-white text-center">
-                <div class="bg-white/10 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <i data-lucide="graduation-cap" class="w-6 h-6"></i>
+    <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-md">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform transition-all border border-purple-100">
+            <div class="bg-gradient-to-tr from-violet-600 via-fuchsia-600 to-pink-600 px-6 py-8 text-white text-center relative overflow-hidden">
+                <div class="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                <div class="bg-white/20 backdrop-blur-md w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner">
+                    <i data-lucide="graduation-cap" class="w-8 h-8 text-white"></i>
                 </div>
-                <h2 class="text-xl font-bold">ATS-AQB Portal</h2>
-                <p class="text-xs text-indigo-200 mt-1">Student Smart Follow-Up System</p>
-                <div class="mt-2 text-[11px] bg-indigo-700/60 inline-block px-3 py-1 rounded-full text-indigo-100">
-                    Created by: <strong>Mr. Moayed Alkhliefat</strong> (Science Teacher)
+                <h2 class="text-2xl font-black tracking-tight">ATS-AQB Portal</h2>
+                <p class="text-xs text-purple-100 mt-1 font-medium">Student Smart Follow-Up System</p>
+                <div class="mt-3 text-xs bg-white/20 backdrop-blur-md inline-block px-3.5 py-1 rounded-full text-white font-medium shadow-sm">
+                    Builder & Admin: <strong>Mr. Moayed Alkhliefat</strong>
                 </div>
             </div>
             <form onsubmit="handleLogin(event)" class="p-6 space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Select Role / Account</label>
-                    <select id="loginRole" onchange="toggleLoginInputs()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                        <option value="admin">Admin Account</option>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Select Role / Account</label>
+                    <select id="loginRole" onchange="toggleLoginInputs()" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium">
+                        <option value="admin">Admin (Mr. Moayed Alkhliefat)</option>
                         <option value="teacher">Teacher Account</option>
                     </select>
                 </div>
 
                 <div id="teacherSelectGroup" class="hidden">
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Select Teacher</label>
-                    <select id="loginTeacherUser" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Select Teacher</label>
+                    <select id="loginTeacherUser" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium">
                         <!-- Dynamically populated -->
                     </select>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Password / Passcode</label>
-                    <input type="password" id="loginPassword" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Enter password (default admin: admin123)">
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Password / Passcode</label>
+                    <input type="password" id="loginPassword" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="Enter password">
                 </div>
 
                 <div class="pt-2">
-                    <button type="submit" class="w-full py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition shadow">
+                    <button type="submit" class="w-full py-3 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 text-white rounded-xl text-sm font-bold hover:opacity-95 transition shadow-lg shadow-fuchsia-500/25">
                         Login to Portal
                     </button>
                 </div>
-                <p class="text-[11px] text-slate-400 text-center mt-2">Default Admin Password: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">admin123</code></p>
+                <div class="bg-purple-50 p-3 rounded-xl border border-purple-100 text-center text-xs text-purple-800 space-y-1">
+                    <p><strong>Admin Username:</strong> moayed alkhliefat</p>
+                    <p><strong>Admin Password:</strong> <code class="bg-purple-200/60 px-1.5 py-0.5 rounded font-mono font-bold">889100</code></p>
+                </div>
             </form>
         </div>
     </div>
 
     <!-- Top Navbar -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <header class="bg-white/80 backdrop-blur-md border-b border-purple-100 sticky top-0 z-30 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="bg-brand-600 text-white p-2 rounded-xl shadow-md flex items-center justify-center">
+                <div class="bg-gradient-to-tr from-violet-600 to-pink-600 text-white p-2.5 rounded-2xl shadow-md flex items-center justify-center">
                     <i data-lucide="graduation-cap" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <h1 class="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                    <h1 class="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
                         <span>ATS-AQB Student Follow-Up</span>
-                        <span class="text-xs px-2 py-0.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-full font-medium">Science Dept</span>
+                        <span class="text-xs px-2.5 py-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full font-bold shadow-sm">Science Dept</span>
                     </h1>
-                    <p class="text-xs text-slate-500">Builder: <span class="font-semibold text-slate-700">Mr. Moayed Alkhliefat</span></p>
+                    <p class="text-xs text-slate-500 font-medium">Builder & Science Teacher: <span class="font-bold text-fuchsia-700">Mr. Moayed Alkhliefat</span></p>
                 </div>
             </div>
 
             <!-- Navigation Tabs & User Profile -->
             <div class="flex items-center space-x-3">
-                <nav id="navTabs" class="hidden sm:flex items-center space-x-1 bg-slate-100 p-1 rounded-lg text-xs font-medium">
-                    <button onclick="switchTab('students')" id="tabStudentsBtn" class="px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-sm transition">Students</button>
-                    <button onclick="switchTab('teachers')" id="tabTeachersBtn" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition hidden">Manage Teachers</button>
+                <nav id="navTabs" class="hidden sm:flex items-center space-x-1 bg-purple-50/80 p-1.5 rounded-xl text-xs font-semibold border border-purple-100">
+                    <button onclick="switchTab('students')" id="tabStudentsBtn" class="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md transition">Students</button>
+                    <button onclick="switchTab('teachers')" id="tabTeachersBtn" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition hidden">Manage Teachers</button>
                 </nav>
 
-                <div class="flex items-center space-x-2 pl-2 border-l border-slate-200">
-                    <span id="currentUserBadge" class="text-xs font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg">Admin</span>
-                    <button onclick="logout()" title="Logout" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+                <div class="flex items-center space-x-2 pl-3 border-l border-slate-200">
+                    <span id="currentUserBadge" class="text-xs font-bold text-purple-800 bg-purple-100 px-3 py-1.5 rounded-xl border border-purple-200">Admin</span>
+                    <button onclick="logout()" title="Logout" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition">
                         <i data-lucide="log-out" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -114,41 +118,41 @@
         <div id="studentsView" class="space-y-8">
             <!-- Dashboard Stats Cards -->
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <p class="text-xs font-medium text-slate-500 uppercase">Total Students</p>
-                    <p id="statTotal" class="text-2xl font-bold text-slate-900 mt-1">0</p>
+                <div class="bg-white/90 backdrop-blur-md p-5 rounded-2xl border border-purple-100 shadow-sm hover:shadow-md transition">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Students</p>
+                    <p id="statTotal" class="text-3xl font-black text-slate-900 mt-1">0</p>
                 </div>
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <p class="text-xs font-medium text-slate-500 uppercase">Enrolled</p>
-                    <p id="statEnrolled" class="text-2xl font-bold text-blue-600 mt-1">0</p>
+                <div class="bg-white/90 backdrop-blur-md p-5 rounded-2xl border border-blue-100 shadow-sm hover:shadow-md transition">
+                    <p class="text-xs font-bold text-blue-500 uppercase tracking-wider">Enrolled</p>
+                    <p id="statEnrolled" class="text-3xl font-black text-blue-600 mt-1">0</p>
                 </div>
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <p class="text-xs font-medium text-slate-500 uppercase">Pending</p>
-                    <p id="statPending" class="text-2xl font-bold text-amber-600 mt-1">0</p>
+                <div class="bg-white/90 backdrop-blur-md p-5 rounded-2xl border border-amber-100 shadow-sm hover:shadow-md transition">
+                    <p class="text-xs font-bold text-amber-500 uppercase tracking-wider">Pending</p>
+                    <p id="statPending" class="text-3xl font-black text-amber-600 mt-1">0</p>
                 </div>
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <p class="text-xs font-medium text-slate-500 uppercase">Active</p>
-                    <p id="statActive" class="text-2xl font-bold text-emerald-600 mt-1">0</p>
+                <div class="bg-white/90 backdrop-blur-md p-5 rounded-2xl border border-emerald-100 shadow-sm hover:shadow-md transition">
+                    <p class="text-xs font-bold text-emerald-500 uppercase tracking-wider">Active</p>
+                    <p id="statActive" class="text-3xl font-black text-emerald-600 mt-1">0</p>
                 </div>
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <p class="text-xs font-medium text-slate-500 uppercase">Graduated</p>
-                    <p id="statGraduated" class="text-2xl font-bold text-purple-600 mt-1">0</p>
+                <div class="bg-white/90 backdrop-blur-md p-5 rounded-2xl border border-purple-100 shadow-sm hover:shadow-md transition">
+                    <p class="text-xs font-bold text-purple-500 uppercase tracking-wider">Graduated</p>
+                    <p id="statGraduated" class="text-3xl font-black text-purple-600 mt-1">0</p>
                 </div>
             </div>
 
             <!-- Search, Filter & Actions Bar -->
-            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="bg-white/90 backdrop-blur-md p-4 rounded-2xl border border-purple-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
                 <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto flex-grow">
                     <!-- Search Box -->
                     <div class="relative w-full sm:w-80">
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                             <i data-lucide="search" class="w-4 h-4"></i>
                         </span>
-                        <input type="text" id="searchInput" oninput="filterStudents()" placeholder="Search by name, ID, grade..." class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                        <input type="text" id="searchInput" oninput="filterStudents()" placeholder="Search by name, ID, grade..." class="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 focus:bg-white font-medium">
                     </div>
 
                     <!-- Status Filter -->
-                    <select id="statusFilter" onchange="filterStudents()" class="w-full sm:w-auto px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <select id="statusFilter" onchange="filterStudents()" class="w-full sm:w-auto px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 font-medium">
                         <option value="">All Statuses</option>
                         <option value="Enrolled">Enrolled</option>
                         <option value="Pending">Pending</option>
@@ -160,14 +164,14 @@
 
                 <!-- Export / Add Student -->
                 <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
-                    <button onclick="loadStudents()" title="Refresh Data" class="p-2 text-slate-600 hover:text-brand-600 hover:bg-slate-100 rounded-lg border border-slate-300 transition">
+                    <button onclick="loadStudents()" title="Refresh Data" class="p-2.5 text-slate-600 hover:text-fuchsia-600 hover:bg-fuchsia-50 rounded-xl border border-slate-200 transition">
                         <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                     </button>
-                    <button onclick="exportCSV()" class="inline-flex items-center space-x-1.5 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition">
-                        <i data-lucide="download" class="w-4 h-4"></i>
+                    <button onclick="exportCSV()" class="inline-flex items-center space-x-1.5 px-3.5 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition shadow-sm">
+                        <i data-lucide="download" class="w-4 h-4 text-fuchsia-600"></i>
                         <span>Export CSV</span>
                     </button>
-                    <button onclick="openStudentModal()" class="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-lg text-white bg-brand-600 hover:bg-brand-700 transition shadow-sm">
+                    <button onclick="openStudentModal()" class="inline-flex items-center space-x-2 px-4 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-95 transition shadow-lg shadow-fuchsia-500/20 rounded-xl">
                         <i data-lucide="user-plus" class="w-4 h-4"></i>
                         <span>Add Student</span>
                     </button>
@@ -175,34 +179,34 @@
             </div>
 
             <!-- Students Table Section -->
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="bg-white/90 backdrop-blur-md rounded-2xl border border-purple-100 shadow-sm overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-slate-200">
-                        <thead class="bg-slate-50">
+                    <table class="min-w-full divide-y divide-purple-100">
+                        <thead class="bg-gradient-to-r from-purple-50 to-pink-50">
                             <tr>
-                                <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Student Name</th>
-                                <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Student ID</th>
-                                <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Grade & Section</th>
-                                <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                                <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Contact</th>
-                                <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Added Date</th>
-                                <th scope="col" class="px-6 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Student Name</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Student ID</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Grade & Section</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Contact</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Added Date</th>
+                                <th scope="col" class="px-6 py-4 text-right text-xs font-black text-purple-900 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="studentsTableBody" class="divide-y divide-slate-200 bg-white">
+                        <tbody id="studentsTableBody" class="divide-y divide-slate-100 bg-white">
                             <!-- Populated by JavaScript -->
                         </tbody>
                     </table>
                 </div>
 
                 <!-- Empty State -->
-                <div id="emptyState" class="hidden text-center py-16 px-4">
-                    <div class="bg-slate-100 text-slate-400 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i data-lucide="users" class="w-8 h-8"></i>
+                <div id="emptyState" class="hidden text-center py-20 px-4">
+                    <div class="bg-purple-50 text-fuchsia-500 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                        <i data-lucide="users" class="w-10 h-10"></i>
                     </div>
-                    <h3 class="text-base font-semibold text-slate-800">No students found</h3>
+                    <h3 class="text-lg font-bold text-slate-800">No students found</h3>
                     <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">Get started by adding your first student record.</p>
-                    <button onclick="openStudentModal()" class="mt-4 inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-lg text-white bg-brand-600 hover:bg-brand-700 transition">
+                    <button onclick="openStudentModal()" class="mt-5 inline-flex items-center space-x-2 px-5 py-2.5 text-sm font-bold rounded-xl text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 shadow-md transition">
                         <i data-lucide="user-plus" class="w-4 h-4"></i>
                         <span>Add Student</span>
                     </button>
@@ -212,29 +216,29 @@
 
         <!-- TEACHERS MANAGEMENT VIEW (Admin Only) -->
         <div id="teachersView" class="space-y-6 hidden">
-            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div class="bg-white/90 backdrop-blur-md p-6 rounded-2xl border border-purple-100 shadow-sm flex items-center justify-between">
                 <div>
-                    <h2 class="text-lg font-bold text-slate-900">Manage Teacher Accounts</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Admin can add, view, and remove teacher accounts for the ATS-AQB portal.</p>
+                    <h2 class="text-lg font-black text-slate-900">Manage Teacher Accounts</h2>
+                    <p class="text-xs text-slate-500 mt-0.5 font-medium">Admin (Mr. Moayed Alkhliefat) can add, view, and remove teacher accounts for the ATS-AQB portal.</p>
                 </div>
-                <button onclick="openTeacherAccountModal()" class="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-lg text-white bg-brand-600 hover:bg-brand-700 transition shadow-sm">
+                <button onclick="openTeacherAccountModal()" class="inline-flex items-center space-x-2 px-4 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-95 transition shadow-lg shadow-fuchsia-500/20 rounded-xl">
                     <i data-lucide="user-plus" class="w-4 h-4"></i>
                     <span>Add Teacher Account</span>
                 </button>
             </div>
 
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <table class="min-w-full divide-y divide-slate-200">
-                    <thead class="bg-slate-50">
+            <div class="bg-white/90 backdrop-blur-md rounded-2xl border border-purple-100 shadow-sm overflow-hidden">
+                <table class="min-w-full divide-y divide-purple-100">
+                    <thead class="bg-gradient-to-r from-purple-50 to-pink-50">
                         <tr>
-                            <th class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Teacher Name</th>
-                            <th class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Username</th>
-                            <th class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Subject</th>
-                            <th class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>
-                            <th class="px-6 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                            <th class="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Teacher Name</th>
+                            <th class="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Username</th>
+                            <th class="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Subject</th>
+                            <th class="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Email</th>
+                            <th class="px-6 py-4 text-right text-xs font-black text-purple-900 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="teachersTableBody" class="divide-y divide-slate-200 bg-white">
+                    <tbody id="teachersTableBody" class="divide-y divide-slate-100 bg-white">
                         <!-- Populated by JS -->
                     </tbody>
                 </table>
@@ -244,21 +248,21 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-slate-200 mt-auto py-6">
+    <footer class="bg-white/80 backdrop-blur-md border-t border-purple-100 mt-auto py-6">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
             <div>
-                <p class="font-semibold text-slate-700">ATS-AQB Student Smart Follow-Up Sheet</p>
-                <p class="text-slate-500 mt-0.5">Created & Built by: <strong class="text-slate-800">Mr. Moayed Alkhliefat</strong> (Science Teacher)</p>
+                <p class="font-bold text-slate-800">ATS-AQB Student Smart Follow-Up Sheet</p>
+                <p class="text-slate-500 mt-0.5">Created & Built by: <strong class="text-fuchsia-700">Mr. Moayed Alkhliefat</strong> (Science Teacher)</p>
             </div>
-            <p>100% Free Cloud Storage & Hosting</p>
+            <p class="font-medium bg-purple-50 text-purple-700 px-3 py-1 rounded-full border border-purple-100">100% Free Cloud Storage & Hosting</p>
         </div>
     </footer>
 
     <!-- ADD / EDIT STUDENT MODAL -->
     <div id="studentModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden transform transition-all">
-            <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                <h3 id="modalTitle" class="text-lg font-bold text-slate-900">Add New Student</h3>
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden transform transition-all border border-purple-100">
+            <div class="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-4 border-b border-purple-100 flex items-center justify-between">
+                <h3 id="modalTitle" class="text-lg font-black text-slate-900">Add New Student</h3>
                 <button onclick="closeStudentModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
@@ -267,18 +271,18 @@
                 <input type="hidden" id="studentIdDb">
                 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Student Full Name *</label>
-                    <input type="text" id="fullName" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="e.g. Ahmed Al-Maktoum">
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Student Full Name *</label>
+                    <input type="text" id="fullName" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="e.g. Ahmed Al-Maktoum">
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Student ID *</label>
-                        <input type="text" id="studentId" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="e.g. STU-2026-001">
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Student ID *</label>
+                        <input type="text" id="studentId" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="e.g. AQB-2026-001">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Status</label>
-                        <select id="status" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Status</label>
+                        <select id="status" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium">
                             <option value="Enrolled">Enrolled</option>
                             <option value="Pending">Pending</option>
                             <option value="Active">Active</option>
@@ -290,34 +294,34 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Grade *</label>
-                        <input type="text" id="grade" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="e.g. Grade 10">
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Grade *</label>
+                        <input type="text" id="grade" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="e.g. Grade 10">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Section *</label>
-                        <input type="text" id="section" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="e.g. Section A">
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Section *</label>
+                        <input type="text" id="section" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="e.g. Section A">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Email Address</label>
-                        <input type="email" id="email" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="ahmed@school.edu">
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Email Address</label>
+                        <input type="email" id="email" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="ahmed@school.edu">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Phone Number</label>
-                        <input type="text" id="phone" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="+971 50 123 4567">
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Phone Number</label>
+                        <input type="text" id="phone" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="+971 50 123 4567">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Follow-Up Notes</label>
-                    <textarea id="notes" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Add academic performance notes, attendance remarks..."></textarea>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Follow-Up Notes</label>
+                    <textarea id="notes" rows="3" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="Add academic performance notes, attendance remarks..."></textarea>
                 </div>
 
-                <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200">
-                    <button type="button" onclick="closeStudentModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition shadow">Save Student</button>
+                <div class="flex items-center justify-end space-x-3 pt-4 border-t border-purple-100">
+                    <button type="button" onclick="closeStudentModal()" class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl text-sm font-bold hover:opacity-95 transition shadow-lg shadow-fuchsia-500/20">Save Student</button>
                 </div>
             </form>
         </div>
@@ -325,37 +329,37 @@
 
     <!-- ADD TEACHER ACCOUNT MODAL (Admin Only) -->
     <div id="teacherModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
-            <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                <h3 class="text-lg font-bold text-slate-900">Add Teacher Account</h3>
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 overflow-hidden border border-purple-100">
+            <div class="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-4 border-b border-purple-100 flex items-center justify-between">
+                <h3 class="text-lg font-black text-slate-900">Add Teacher Account</h3>
                 <button onclick="closeTeacherAccountModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
             <form onsubmit="handleTeacherSubmit(event)" class="p-6 space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Teacher Full Name *</label>
-                    <input type="text" id="tName" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="e.g. Mr. John Doe">
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Teacher Full Name *</label>
+                    <input type="text" id="tName" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="e.g. Mr. John Doe">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Username *</label>
-                    <input type="text" id="tUsername" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="e.g. johndoe">
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Username *</label>
+                    <input type="text" id="tUsername" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="e.g. johndoe">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Subject *</label>
-                    <input type="text" id="tSubject" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="e.g. Physics / Chemistry">
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Subject *</label>
+                    <input type="text" id="tSubject" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="e.g. Physics / Chemistry">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Password *</label>
-                    <input type="password" id="tPassword" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Teacher account password">
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Password *</label>
+                    <input type="password" id="tPassword" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="Teacher account password">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Email</label>
-                    <input type="email" id="tEmail" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="john@school.edu">
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Email</label>
+                    <input type="email" id="tEmail" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="john@school.edu">
                 </div>
-                <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200">
-                    <button type="button" onclick="closeTeacherAccountModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition shadow">Create Account</button>
+                <div class="flex items-center justify-end space-x-3 pt-4 border-t border-purple-100">
+                    <button type="button" onclick="closeTeacherAccountModal()" class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl text-sm font-bold hover:opacity-95 transition shadow-lg shadow-fuchsia-500/20">Create Account</button>
                 </div>
             </form>
         </div>
@@ -372,7 +376,7 @@
         let supabaseClient = null;
         let students = [];
         let teachers = [];
-        let currentUser = null; // { role: 'admin'|'teacher', username: '', name: '' }
+        let currentUser = null;
 
         try {
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -421,13 +425,13 @@
         function handleLogin(event) {
             event.preventDefault();
             const role = document.getElementById('loginRole').value;
-            const password = document.getElementById('loginPassword').value;
+            const password = document.getElementById('loginPassword').value.trim();
 
             if (role === 'admin') {
-                if (password === 'admin123' || password === 'admin') {
-                    currentUser = { role: 'admin', username: 'admin', name: 'Mr. Moayed Alkhliefat (Admin)' };
+                if (password === '889100') {
+                    currentUser = { role: 'admin', username: 'moayed alkhliefat', name: 'Mr. Moayed Alkhliefat (Admin)' };
                 } else {
-                    alert('Incorrect admin password. (Default is admin123)');
+                    alert('Incorrect admin password. (Password is 889100)');
                     return;
                 }
             } else {
@@ -480,14 +484,14 @@
             if (tab === 'students') {
                 studentsView.classList.remove('hidden');
                 teachersView.classList.add('hidden');
-                studentsBtn.className = "px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-sm transition";
-                teachersBtn.className = "px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition";
+                studentsBtn.className = "px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md transition";
+                teachersBtn.className = "px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition";
                 loadStudents();
             } else if (tab === 'teachers' && currentUser.role === 'admin') {
                 teachersView.classList.remove('hidden');
                 studentsView.classList.add('hidden');
-                teachersBtn.className = "px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-sm transition";
-                studentsBtn.className = "px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition";
+                teachersBtn.className = "px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md transition";
+                studentsBtn.className = "px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition";
                 renderTeachers();
             }
         }
@@ -502,9 +506,8 @@
                     teachers = [];
                 }
             } else {
-                // Default initial teacher
                 teachers = [
-                    { username: 'science1', name: 'Mr. Moayed Alkhliefat', subject: 'Science', password: 'password123', email: 'moayed@ats-aqb.edu' }
+                    { username: 'science_teacher', name: 'Mr. Moayed Alkhliefat', subject: 'Science', password: 'password123', email: 'moayed@ats-aqb.edu' }
                 ];
                 saveTeachersToStorage();
             }
@@ -548,13 +551,13 @@
         function renderTeachers() {
             const tbody = document.getElementById('teachersTableBody');
             tbody.innerHTML = teachers.map(t => `
-                <tr class="hover:bg-slate-50 transition">
-                    <td class="px-6 py-4 text-sm font-semibold text-slate-900">${escapeHtml(t.name)}</td>
-                    <td class="px-6 py-4 text-sm font-mono text-slate-600">${escapeHtml(t.username)}</td>
-                    <td class="px-6 py-4 text-sm text-slate-700">${escapeHtml(t.subject)}</td>
+                <tr class="hover:bg-purple-50/50 transition">
+                    <td class="px-6 py-4 text-sm font-bold text-slate-900">${escapeHtml(t.name)}</td>
+                    <td class="px-6 py-4 text-sm font-mono text-purple-700 bg-purple-50/60 rounded px-2">${escapeHtml(t.username)}</td>
+                    <td class="px-6 py-4 text-sm font-medium text-slate-700">${escapeHtml(t.subject)}</td>
                     <td class="px-6 py-4 text-sm text-slate-500">${escapeHtml(t.email || 'N/A')}</td>
                     <td class="px-6 py-4 text-right text-sm font-medium">
-                        <button onclick="deleteTeacher('${t.username}')" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <button onclick="deleteTeacher('${t.username}')" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </td>
                 </tr>
             `).join('');
@@ -670,41 +673,41 @@
 
             emptyState.classList.add('hidden');
             tbody.innerHTML = filtered.map(s => `
-                <tr class="hover:bg-slate-50 transition">
+                <tr class="hover:bg-purple-50/40 transition">
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
-                            <div class="w-9 h-9 rounded-full bg-brand-100 text-brand-700 font-bold flex items-center justify-center text-sm mr-3">
+                            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-violet-500 to-fuchsia-500 text-white font-black flex items-center justify-center text-sm mr-3 shadow-md shadow-fuchsia-500/20">
                                 ${getInitials(s.name)}
                             </div>
                             <div>
-                                <div class="text-sm font-semibold text-slate-900">${escapeHtml(s.name)}</div>
-                                <div class="text-xs text-slate-500 truncate max-w-xs">${escapeHtml(s.notes || 'No notes added')}</div>
+                                <div class="text-sm font-bold text-slate-900">${escapeHtml(s.name)}</div>
+                                <div class="text-xs text-slate-500 truncate max-w-xs font-medium">${escapeHtml(s.notes || 'No notes added')}</div>
                             </div>
                         </div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-slate-700">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-semibold text-purple-700 bg-purple-50/50">
                         ${escapeHtml(s.studentId)}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-medium">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-semibold">
                         <div>${escapeHtml(s.grade)}</div>
-                        <div class="text-xs text-slate-500">${escapeHtml(s.section)}</div>
+                        <div class="text-xs text-slate-400 font-medium">${escapeHtml(s.section)}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(s.status)}">
+                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full shadow-sm ${getStatusBadgeClass(s.status)}">
                             ${escapeHtml(s.status)}
                         </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">
-                        <div>${s.email ? `<a href="mailto:${s.email}" class="hover:text-brand-600">${escapeHtml(s.email)}</a>` : 'No email'}</div>
-                        <div>${s.phone || ''}</div>
+                    <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-600 font-medium">
+                        <div>${s.email ? `<a href="mailto:${s.email}" class="hover:text-fuchsia-600 underline">${escapeHtml(s.email)}</a>` : 'No email'}</div>
+                        <div class="text-slate-400">${s.phone || ''}</div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">
+                    <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500 font-medium">
                         ${formatDate(s.created_at)}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div class="flex items-center justify-end space-x-2">
-                            <button onclick="editStudent('${s.id}')" title="Edit Student" class="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-slate-100 rounded-lg transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                            <button onclick="deleteStudent('${s.id}')" title="Delete Student" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            <button onclick="editStudent('${s.id}')" title="Edit Student" class="p-2 text-slate-400 hover:text-fuchsia-600 hover:bg-fuchsia-50 rounded-xl transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                            <button onclick="deleteStudent('${s.id}')" title="Delete Student" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         </div>
                     </td>
                 </tr>
@@ -850,12 +853,12 @@
 
         function getStatusBadgeClass(status) {
             switch (status) {
-                case 'Enrolled': return 'bg-blue-50 text-blue-700 border border-blue-200';
-                case 'Pending': return 'bg-amber-50 text-amber-700 border border-amber-200';
-                case 'Active': return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
-                case 'Graduated': return 'bg-purple-50 text-purple-700 border border-purple-200';
-                case 'Inactive': return 'bg-red-50 text-red-700 border border-red-200';
-                default: return 'bg-slate-100 text-slate-700 border border-slate-200';
+                case 'Enrolled': return 'bg-blue-100 text-blue-800 border border-blue-200';
+                case 'Pending': return 'bg-amber-100 text-amber-800 border border-amber-200';
+                case 'Active': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+                case 'Graduated': return 'bg-purple-100 text-purple-800 border border-purple-200';
+                case 'Inactive': return 'bg-rose-100 text-rose-800 border border-rose-200';
+                default: return 'bg-slate-100 text-slate-800 border border-slate-200';
             }
         }
 
