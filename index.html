@@ -546,14 +546,17 @@
             const tabTeachersBtn = document.getElementById('tabTeachersBtn');
             const roleBadge = document.getElementById('navRoleBadge');
 
-            if (currentUser.role === 'admin') {
+            const isAdmin = currentUser.role === 'admin' || (currentUser.username && currentUser.username.toLowerCase().includes('moayed'));
+
+            if (isAdmin) {
+                currentUser.role = 'admin';
                 badge.textContent = 'Admin: Mr. Moayed';
                 roleBadge.textContent = 'Admin View (All)';
-                tabTeachersBtn.classList.remove('hidden');
+                if (tabTeachersBtn) tabTeachersBtn.classList.remove('hidden');
             } else {
                 badge.textContent = `Teacher: ${currentUser.name}`;
-                roleBadge.textContent = `${currentUser.subject} Dept`;
-                tabTeachersBtn.classList.add('hidden');
+                roleBadge.textContent = `${currentUser.subject || 'Teacher'} Dept`;
+                if (tabTeachersBtn) tabTeachersBtn.classList.add('hidden');
                 switchTab('students');
             }
         }
@@ -561,7 +564,8 @@
         function logout() {
             localStorage.removeItem('ats_aqb_session');
             currentUser = null;
-            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('loginModal').classList.remove('hidden');
+            document.getElementById('loginPassword').value = '';
         }
 
         function switchTab(tab) {
