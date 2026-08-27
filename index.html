@@ -151,6 +151,11 @@
                     <select id="sectionFilter" onchange="filterStudents()" class="w-full sm:w-auto px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 font-medium">
                         <option value="">All Sections</option>
                     </select>
+
+                    <!-- Date Filter -->
+                    <select id="dateFilter" onchange="filterStudents()" class="w-full sm:w-auto px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 font-medium">
+                        <option value="">All Dates</option>
+                    </select>
                 </div>
 
                 <!-- Excel Upload / Export / Backup / Add Student -->
@@ -668,19 +673,35 @@
                             } catch (err) {}
                         }
 
-                        const existingIdx = students.findIndex(s => s.studentId === parsed.studentId || s.name.toLowerCase() === parsed.name.toLowerCase());
+                        const existingStudent = students.find(s => s.studentId === parsed.studentId || s.name.toLowerCase() === parsed.name.toLowerCase());
+                        let studentLogs = existingStudent && existingStudent.logs ? [...existingStudent.logs] : [];
+                        const existingLogIdx = studentLogs.findIndex(l => l.date === parsed.date);
+                        if (existingLogIdx !== -1) {
+                            studentLogs[existingLogIdx].notes = parsed.notes;
+                        } else {
+                            studentLogs.push({
+                                date: parsed.date,
+                                notes: parsed.notes,
+                                teacher: ownerTag,
+                                created_at: new Date().toISOString()
+                            });
+                        }
+                        studentLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
+
                         const newStuObj = {
-                            id: 'local-' + Date.now() + '-' + i,
+                            id: existingStudent ? existingStudent.id : ('local-' + Date.now() + '-' + i),
                             name: parsed.name,
                             studentId: parsed.studentId,
                             grade: parsed.grade,
                             section: parsed.section,
                             date: parsed.date,
                             notes: parsed.notes,
+                            logs: studentLogs,
                             teacher: ownerTag,
-                            created_at: new Date().toISOString()
+                            created_at: existingStudent ? existingStudent.created_at : new Date().toISOString()
                         };
 
+                        const existingIdx = students.findIndex(s => s.studentId === parsed.studentId || s.name.toLowerCase() === parsed.name.toLowerCase());
                         if (existingIdx !== -1) {
                             students[existingIdx] = { ...students[existingIdx], ...newStuObj };
                         } else {
@@ -1536,20 +1557,33 @@
             const accessible = getAccessibleStudents();
             const gradeSelect = document.getElementById('gradeFilter');
             const sectionSelect = document.getElementById('sectionFilter');
+            const dateSelect = document.getElementById('dateFilter');
 
-            if (!gradeSelect || !sectionSelect) return;
+            if (!gradeSelect || !sectionSelect || !dateSelect) return;
 
             const currentGrade = gradeSelect.value;
             const currentSection = sectionSelect.value;
+            const currentDate = dateSelect.value;
 
             const grades = [...new Set(accessible.map(s => s.grade))].sort();
             const sections = [...new Set(accessible.map(s => s.section))].sort();
+            
+            const allDatesSet = new Set();
+            accessible.forEach(s => {
+                if (s.date) allDatesSet.add(s.date);
+                if (s.logs && Array.isArray(s.logs)) {
+                    s.logs.forEach(l => { if (l.date) allDatesSet.add(l.date); });
+                }
+            });
+            const dates = Array.from(allDatesSet).sort().reverse();
 
             gradeSelect.innerHTML = '<option value="">All Grades</option>' + grades.map(g => `<option value="${g}">${g}</option>`).join('');
             sectionSelect.innerHTML = '<option value="">All Sections</option>' + sections.map(sec => `<option value="${sec}">${sec}</option>`).join('');
+            dateSelect.innerHTML = '<option value="">All Dates</option>' + dates.map(d => `<option value="${d}">${d}</option>`).join('');
 
             gradeSelect.value = currentGrade;
             sectionSelect.value = currentSection;
+            dateSelect.value = currentDate;
         }
 
         function renderStudents() {
@@ -1558,6 +1592,7 @@
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const gradeFilter = document.getElementById('gradeFilter').value;
             const sectionFilter = document.getElementById('sectionFilter').value;
+            const dateFilter = document.getElementById('dateFilter') ? document.getElementById('dateFilter').value : '';
 
             const accessibleStudents = getAccessibleStudents();
             const ownerTag = (currentUser && currentUser.role === 'teacher') ? currentUser.username : null;
@@ -1570,7 +1605,14 @@
                                       (s.studentId && s.studentId.toLowerCase().includes(searchTerm));
                 const matchesGrade = gradeFilter === '' || s.grade === gradeFilter;
                 const matchesSection = sectionFilter === '' || s.section === sectionFilter;
-                return matchesSearch && matchesGrade && matchesSection;
+                
+                let matchesDate = true;
+                if (dateFilter !== '') {
+                    const hasDateInLogs = s.logs && Array.isArray(s.logs) && s.logs.some(l => l.date === dateFilter);
+                    const matchesMainDate = s.date === dateFilter;
+                    matchesDate = hasDateInLogs || matchesMainDate;
+                }
+                return matchesSearch && matchesGrade && matchesSection && matchesDate;
             });
 
             if (filtered.length === 0) {
@@ -1603,7 +1645,25 @@
                                         <span>•</span>
                                         <span class="text-fuchsia-700 font-bold"><strong>Date:</strong> ${escapeHtml(studentDate)}</span>
                                     </div>
-                                    ${s.notes ? `<p class="text-xs text-slate-600 mt-1.5 bg-purple-50/50 px-3 py-1.5 rounded-xl border border-purple-100/60 font-medium"><strong>Notes:</strong> ${escapeHtml(s.notes)}</p>` : ''}
+                                    ${s.notes ? `<p class="text-xs text-slate-600 mt-1.5 bg-purple-50/50 px-3 py-1.5 rounded-xl border border-purple-100/60 font-medium"><strong>Notes (${escapeHtml(studentDate)}):</strong> ${escapeHtml(s.notes)}</p>` : ''}
+                                    ${s.logs && s.logs.length > 0 ? `
+                                        <div class="mt-2">
+                                            <details class="text-xs text-purple-700 font-medium cursor-pointer bg-purple-50/80 px-3 py-1.5 rounded-xl border border-purple-100">
+                                                <summary class="font-bold">📅 Daily Follow-Up History (${s.logs.length} entries)</summary>
+                                                <div class="mt-2 space-y-2 pl-2 border-l-2 border-purple-300">
+                                                    ${s.logs.map(l => `
+                                                        <div class="text-[11px] text-slate-700 bg-white p-2 rounded-lg border border-purple-100 shadow-xs">
+                                                            <div class="flex justify-between items-center font-bold text-fuchsia-700">
+                                                                <span>Date: ${escapeHtml(l.date)}</span>
+                                                                <span class="text-[10px] text-slate-400 font-normal">Teacher: ${escapeHtml(l.teacher || 'admin')}</span>
+                                                            </div>
+                                                            <p class="mt-1 text-slate-600">${escapeHtml(l.notes || 'No remarks')}</p>
+                                                        </div>
+                                                    `).join('')}
+                                                </div>
+                                            </details>
+                                        </div>
+                                    ` : ''}
                                 </div>
                             </div>
 
@@ -1738,7 +1798,28 @@
                 }
             }
 
-            // Update local array immediately & safely merge
+            // Update local array immediately & safely merge with daily logs
+            const existingStudent = students.find(s => s.id === id || s.studentId === studentIdInput);
+            let studentLogs = existingStudent && existingStudent.logs ? [...existingStudent.logs] : [];
+            
+            const existingLogIdx = studentLogs.findIndex(l => l.date === dateVal);
+            if (existingLogIdx !== -1) {
+                studentLogs[existingLogIdx] = {
+                    ...studentLogs[existingLogIdx],
+                    notes: rawNotes,
+                    teacher: ownerTag,
+                    updated_at: new Date().toISOString()
+                };
+            } else {
+                studentLogs.push({
+                    date: dateVal,
+                    notes: rawNotes,
+                    teacher: ownerTag,
+                    created_at: new Date().toISOString()
+                });
+            }
+            studentLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
+
             const newStuObj = {
                 id: id || ('local-' + Date.now()),
                 name: fullNameInput,
@@ -1747,8 +1828,9 @@
                 section: sectionVal,
                 date: dateVal,
                 notes: rawNotes,
+                logs: studentLogs,
                 teacher: ownerTag,
-                created_at: new Date().toISOString()
+                created_at: existingStudent ? existingStudent.created_at : new Date().toISOString()
             };
 
             const existingIdx = students.findIndex(s => s.id === id || s.studentId === studentIdInput);
