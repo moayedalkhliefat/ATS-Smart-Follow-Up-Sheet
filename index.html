@@ -1009,14 +1009,19 @@
         function handleTeacherSubmit(event) {
             event.preventDefault();
             const newTeacher = {
-                name: document.getElementById('tName').value,
-                username: document.getElementById('tUsername').value,
-                subject: document.getElementById('tSubject').value,
-                password: document.getElementById('tPassword').value,
-                email: document.getElementById('tEmail').value
+                name: document.getElementById('tName').value.trim(),
+                username: document.getElementById('tUsername').value.trim(),
+                subject: document.getElementById('tSubject').value.trim(),
+                password: document.getElementById('tPassword').value.trim(),
+                email: document.getElementById('tEmail').value.trim()
             };
 
-            if (teachers.some(t => t.username === newTeacher.username)) {
+            if (!newTeacher.name || !newTeacher.username || !newTeacher.password) {
+                alert('Please fill in Name, Username, and Password.');
+                return;
+            }
+
+            if (teachers.some(t => t.username.toLowerCase() === newTeacher.username.toLowerCase())) {
                 alert('Username already exists. Choose another username.');
                 return;
             }
@@ -1024,8 +1029,16 @@
             teachers.push(newTeacher);
             saveTeachersToStorage();
             closeTeacherAccountModal();
+            
+            // Reset form fields
+            document.getElementById('tName').value = '';
+            document.getElementById('tUsername').value = '';
+            document.getElementById('tSubject').value = '';
+            document.getElementById('tPassword').value = '';
+            document.getElementById('tEmail').value = '';
+
             renderTeachers();
-            alert('Teacher account created successfully!');
+            alert('Teacher account created successfully! They can now log in.');
         }
 
         function renderTeachers() {
