@@ -98,7 +98,8 @@
                     <button onclick="switchTab('students')" id="tabStudentsBtn" class="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md transition">Students</button>
                     <button onclick="switchTab('categories')" id="tabCategoriesBtn" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition">My Categories & Marks</button>
                     <button onclick="switchTab('reports')" id="tabReportsBtn" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition">Reports</button>
-                    <button onclick="switchTab('teachers')" id="tabTeachersBtn" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition hidden">Manage Teachers</button>
+                    <!-- Manage Teachers tab only for Admin -->
+                    <button onclick="switchTab('teachers')" id="tabTeachersBtn" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition hidden items-center space-x-1"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i><span>Manage Teachers</span></button>
                 </nav>
 
                 <div class="flex items-center space-x-2 pl-3 border-l border-slate-200">
@@ -140,16 +141,26 @@
                 </div>
             </div>
 
-            <!-- Search, Filter & Actions Bar -->
+            <!-- Search, Filters & Actions Bar -->
             <div class="bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-purple-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-                <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto flex-grow">
+                <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto flex-grow flex-wrap">
                     <!-- Search Box -->
-                    <div class="relative w-full sm:w-80">
+                    <div class="relative w-full sm:w-64">
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                             <i data-lucide="search" class="w-4 h-4"></i>
                         </span>
-                        <input type="text" id="searchInput" oninput="filterStudents()" placeholder="Search by name, ID, grade..." class="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 focus:bg-white font-medium">
+                        <input type="text" id="searchInput" oninput="filterStudents()" placeholder="Search name or ID..." class="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 focus:bg-white font-medium">
                     </div>
+
+                    <!-- Grade Filter -->
+                    <select id="gradeFilter" onchange="filterStudents()" class="w-full sm:w-auto px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 font-medium">
+                        <option value="">All Grades</option>
+                    </select>
+
+                    <!-- Section Filter -->
+                    <select id="sectionFilter" onchange="filterStudents()" class="w-full sm:w-auto px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 font-medium">
+                        <option value="">All Sections</option>
+                    </select>
 
                     <!-- Status Filter -->
                     <select id="statusFilter" onchange="filterStudents()" class="w-full sm:w-auto px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 font-medium">
@@ -183,44 +194,27 @@
                 </div>
             </div>
 
-            <!-- Students Table Section -->
-            <div class="bg-white/95 backdrop-blur-md rounded-2xl border border-purple-100 shadow-sm overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-purple-100">
-                        <thead class="bg-gradient-to-r from-purple-50 to-pink-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Student Name</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Student ID</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Grade & Section</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Status</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Contact</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Added Date</th>
-                                <th scope="col" class="px-6 py-4 text-right text-xs font-black text-purple-900 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="studentsTableBody" class="divide-y divide-slate-100 bg-white">
-                            <!-- Populated by JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
+            <!-- Students List Section (Under each other as vertical cards / list items) -->
+            <div id="studentsListContainer" class="space-y-4">
+                <!-- Rendered dynamically -->
+            </div>
 
-                <!-- Empty State -->
-                <div id="emptyState" class="hidden text-center py-20 px-4">
-                    <div class="bg-purple-50 text-fuchsia-500 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
-                        <i data-lucide="users" class="w-10 h-10"></i>
-                    </div>
-                    <h3 class="text-lg font-bold text-slate-800">No students found</h3>
-                    <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">Get started by adding your first student record or uploading an Excel/CSV spreadsheet.</p>
-                    <div class="mt-5 flex justify-center gap-3">
-                        <button onclick="document.getElementById('excelUploadInput').click()" class="inline-flex items-center space-x-2 px-4 py-2.5 text-sm font-bold rounded-xl text-purple-700 bg-purple-50 border border-purple-200 shadow-sm transition">
-                            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
-                            <span>Upload Excel/CSV</span>
-                        </button>
-                        <button onclick="openStudentModal()" class="inline-flex items-center space-x-2 px-5 py-2.5 text-sm font-bold rounded-xl text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 shadow-md transition">
-                            <i data-lucide="user-plus" class="w-4 h-4"></i>
-                            <span>Add Student</span>
-                        </button>
-                    </div>
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden bg-white/95 backdrop-blur-md rounded-2xl border border-purple-100 text-center py-20 px-4 shadow-sm">
+                <div class="bg-purple-50 text-fuchsia-500 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                    <i data-lucide="users" class="w-10 h-10"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800">No students found</h3>
+                <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">Get started by adding your first student record or uploading an Excel/CSV spreadsheet.</p>
+                <div class="mt-5 flex justify-center gap-3">
+                    <button onclick="document.getElementById('excelUploadInput').click()" class="inline-flex items-center space-x-2 px-4 py-2.5 text-sm font-bold rounded-xl text-purple-700 bg-purple-50 border border-purple-200 shadow-sm transition">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                        <span>Upload Excel/CSV</span>
+                    </button>
+                    <button onclick="openStudentModal()" class="inline-flex items-center space-x-2 px-5 py-2.5 text-sm font-bold rounded-xl text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 shadow-md transition">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i>
+                        <span>Add Student</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -230,7 +224,7 @@
             <div class="bg-white/95 backdrop-blur-md p-6 rounded-2xl border border-purple-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
                     <h2 class="text-lg font-black text-slate-900">My Custom Categories & Marks Sliders</h2>
-                    <p class="text-xs text-slate-500 mt-0.5 font-medium">Create your own evaluation categories (e.g. Quizzes, Homework, Behavior) and assign marks using interactive sliders (0–100).</p>
+                    <p class="text-xs text-slate-500 mt-0.5 font-medium">Create your own colored evaluation categories and assign marks using interactive sliders (0–100).</p>
                 </div>
                 <button onclick="openCategoryModal()" class="inline-flex items-center space-x-2 px-4 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-95 transition shadow-lg shadow-fuchsia-500/20 rounded-xl">
                     <i data-lucide="folder-plus" class="w-4 h-4"></i>
@@ -294,7 +288,6 @@
                             <th class="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Teacher Name</th>
                             <th class="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Username</th>
                             <th class="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Subject</th>
-                            <th class="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Email</th>
                             <th class="px-6 py-4 text-right text-xs font-black text-purple-900 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
@@ -401,6 +394,16 @@
                     <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Category Name *</label>
                     <input type="text" id="categoryNameInput" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="e.g. Physics Project / Lab Work">
                 </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Category Theme Color</label>
+                    <div class="flex items-center space-x-3 pt-1">
+                        <label class="cursor-pointer"><input type="radio" name="catColor" value="purple" checked class="peer sr-only"><span class="block w-8 h-8 rounded-full bg-purple-600 ring-2 ring-offset-2 ring-purple-400 peer-checked:ring-purple-700"></span></label>
+                        <label class="cursor-pointer"><input type="radio" name="catColor" value="pink" class="peer sr-only"><span class="block w-8 h-8 rounded-full bg-pink-500 ring-2 ring-offset-2 ring-transparent peer-checked:ring-pink-600"></span></label>
+                        <label class="cursor-pointer"><input type="radio" name="catColor" value="blue" class="peer sr-only"><span class="block w-8 h-8 rounded-full bg-blue-600 ring-2 ring-offset-2 ring-transparent peer-checked:ring-blue-700"></span></label>
+                        <label class="cursor-pointer"><input type="radio" name="catColor" value="emerald" class="peer sr-only"><span class="block w-8 h-8 rounded-full bg-emerald-600 ring-2 ring-offset-2 ring-transparent peer-checked:ring-emerald-700"></span></label>
+                        <label class="cursor-pointer"><input type="radio" name="catColor" value="amber" class="peer sr-only"><span class="block w-8 h-8 rounded-full bg-amber-500 ring-2 ring-offset-2 ring-transparent peer-checked:ring-amber-600"></span></label>
+                    </div>
+                </div>
                 <div class="flex items-center justify-end space-x-3 pt-4 border-t border-purple-100">
                     <button type="button" onclick="closeCategoryModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition">Cancel</button>
                     <button type="submit" class="px-4 py-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl text-sm font-bold hover:opacity-95 transition shadow">Add Category</button>
@@ -435,10 +438,7 @@
                     <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Password *</label>
                     <input type="password" id="tPassword" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="Teacher account password">
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Email</label>
-                    <input type="email" id="tEmail" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-fuchsia-500 focus:outline-none font-medium" placeholder="john@school.edu">
-                </div>
+                <!-- Email input removed per user request -->
                 <div class="flex items-center justify-end space-x-3 pt-4 border-t border-purple-100">
                     <button type="button" onclick="closeTeacherAccountModal()" class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition">Cancel</button>
                     <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl text-sm font-bold hover:opacity-95 transition shadow-lg shadow-fuchsia-500/20">Create Account</button>
@@ -458,7 +458,7 @@
         let supabaseClient = null;
         let students = [];
         let teachers = [];
-        let categories = []; // [{ id, name, teacher }]
+        let categories = []; // [{ id, name, teacher, color }]
         let studentMarks = {}; // { studentId: { categoryId: mark } }
         let currentUser = null;
 
@@ -546,10 +546,10 @@
             const tabTeachersBtn = document.getElementById('tabTeachersBtn');
             const roleBadge = document.getElementById('navRoleBadge');
 
-            // Strictly check admin role or specific admin username
             const isAdmin = currentUser.role === 'admin' && currentUser.username === 'moayed alkhliefat';
 
             if (isAdmin) {
+                currentUser.role = 'admin';
                 badge.textContent = 'Admin: Mr. Moayed';
                 roleBadge.textContent = 'Admin View (All)';
                 if (tabTeachersBtn) tabTeachersBtn.classList.remove('hidden');
@@ -557,6 +557,7 @@
                 currentUser.role = 'teacher';
                 badge.textContent = `Teacher: ${currentUser.name}`;
                 roleBadge.textContent = `${currentUser.subject || 'Teacher'} Dept`;
+                // Strictly hide manage teachers from teacher accounts
                 if (tabTeachersBtn) tabTeachersBtn.classList.add('hidden');
                 switchTab('students');
             }
@@ -583,7 +584,7 @@
             studentsView.classList.add('hidden');
             categoriesView.classList.add('hidden');
             reportsView.classList.add('hidden');
-            teachersView.classList.add('hidden');
+            if (teachersView) teachersView.classList.add('hidden');
 
             [sBtn, cBtn, rBtn, tBtn].forEach(btn => {
                 if (btn) btn.className = "px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition";
@@ -602,7 +603,7 @@
                 rBtn.className = "px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md transition";
                 initReportsView();
             } else if (tab === 'teachers' && currentUser && currentUser.role === 'admin') {
-                teachersView.classList.remove('hidden');
+                if (teachersView) teachersView.classList.remove('hidden');
                 tBtn.className = "px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md transition";
                 renderTeachers();
             }
@@ -693,7 +694,7 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // Custom Categories per Teacher
+        // Custom Categories per Teacher with Color Options
         function loadCategoriesFromStorage() {
             const data = localStorage.getItem('ats_aqb_categories');
             if (data) {
@@ -704,8 +705,8 @@
                 }
             } else {
                 categories = [
-                    { id: 'cat_1', name: 'Science Quiz 1', teacher: 'science_teacher' },
-                    { id: 'cat_2', name: 'Homework & Assignments', teacher: 'science_teacher' }
+                    { id: 'cat_1', name: 'Science Quiz 1', teacher: 'science_teacher', color: 'purple' },
+                    { id: 'cat_2', name: 'Homework & Assignments', teacher: 'science_teacher', color: 'blue' }
                 ];
                 saveCategoriesToStorage();
             }
@@ -746,19 +747,23 @@
             const name = document.getElementById('categoryNameInput').value.trim();
             if (!name) return;
 
+            const colorRadio = document.querySelector('input[name="catColor"]:checked');
+            const color = colorRadio ? colorRadio.value : 'purple';
+
             const ownerTag = (currentUser && currentUser.role === 'teacher') ? currentUser.username : 'admin';
 
             const newCat = {
                 id: 'cat_' + Date.now(),
                 name: name,
-                teacher: ownerTag
+                teacher: ownerTag,
+                color: color
             };
 
             categories.push(newCat);
             saveCategoriesToStorage();
             closeCategoryModal();
             renderCategoriesView();
-            alert('Your custom evaluation category was added successfully!');
+            alert('Your custom colored category was added successfully!');
         }
 
         function deleteCategory(catId) {
@@ -781,11 +786,20 @@
             }
         }
 
+        function getColorClasses(color) {
+            switch(color) {
+                case 'pink': return { border: 'border-pink-200', bg: 'bg-pink-50/40', dot: 'bg-pink-500' };
+                case 'blue': return { border: 'border-blue-200', bg: 'bg-blue-50/40', dot: 'bg-blue-600' };
+                case 'emerald': return { border: 'border-emerald-200', bg: 'bg-emerald-50/40', dot: 'bg-emerald-600' };
+                case 'amber': return { border: 'border-amber-200', bg: 'bg-amber-50/40', dot: 'bg-amber-500' };
+                default: return { border: 'border-purple-200', bg: 'bg-purple-50/40', dot: 'bg-purple-600' };
+            }
+        }
+
         function renderCategoriesView() {
             const container = document.getElementById('categoriesContainer');
             const ownerTag = (currentUser && currentUser.role === 'teacher') ? currentUser.username : null;
 
-            // Each teacher chooses and sees only their own custom categories
             const teacherCategories = (currentUser && currentUser.role === 'admin')
                 ? categories
                 : categories.filter(c => c.teacher === ownerTag);
@@ -794,9 +808,9 @@
             
             if (teacherCategories.length === 0) {
                 container.innerHTML = `
-                    <div class="bg-white/95 p-12 rounded-2xl border border-purple-100 text-center space-y-3">
-                        <p class="text-slate-600 font-bold">You haven't created any custom evaluation categories yet.</p>
-                        <p class="text-xs text-slate-400">Click the button above to add your own categories (e.g. Lab Report, Quiz 2, Project).</p>
+                    <div class="bg-white/95 p-12 rounded-2xl border border-purple-100 text-center space-y-3 shadow-sm">
+                        <p class="text-slate-600 font-bold">You haven't created any custom categories yet.</p>
+                        <p class="text-xs text-slate-400">Click the button above to add your colored evaluation categories.</p>
                         <button onclick="openCategoryModal()" class="mt-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl text-sm font-bold shadow">Add My First Category</button>
                     </div>
                 `;
@@ -805,42 +819,45 @@
 
             if (activeStudents.length === 0) {
                 container.innerHTML = `
-                    <div class="bg-white/95 p-12 rounded-2xl border border-purple-100 text-center">
+                    <div class="bg-white/95 p-12 rounded-2xl border border-purple-100 text-center shadow-sm">
                         <p class="text-slate-500 font-medium">No students found in your separate record sheet. Please add students first.</p>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = teacherCategories.map(cat => `
-                <div class="bg-white/95 backdrop-blur-md rounded-2xl border border-purple-100 shadow-sm p-6 space-y-4">
-                    <div class="flex items-center justify-between border-b border-purple-50 pb-3">
-                        <div class="flex items-center space-x-2">
-                            <span class="w-3 h-3 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600"></span>
-                            <h3 class="text-base font-black text-slate-900">${escapeHtml(cat.name)}</h3>
+            container.innerHTML = teacherCategories.map(cat => {
+                const cols = getColorClasses(cat.color);
+                return `
+                    <div class="bg-white/95 backdrop-blur-md rounded-2xl border ${cols.border} shadow-sm p-6 space-y-4">
+                        <div class="flex items-center justify-between border-b border-purple-50 pb-3">
+                            <div class="flex items-center space-x-2.5">
+                                <span class="w-3.5 h-3.5 rounded-full ${cols.dot}"></span>
+                                <h3 class="text-base font-black text-slate-900">${escapeHtml(cat.name)}</h3>
+                            </div>
+                            <button onclick="deleteCategory('${cat.id}')" title="Delete Category" class="text-slate-400 hover:text-red-600 p-1.5 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         </div>
-                        <button onclick="deleteCategory('${cat.id}')" title="Delete Category" class="text-slate-400 hover:text-red-600 p-1.5 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        ${activeStudents.map(s => {
-                            const currentMark = (studentMarks[s.id] && studentMarks[s.id][cat.id] !== undefined) ? studentMarks[s.id][cat.id] : 75;
-                            return `
-                                <div class="bg-purple-50/40 p-4 rounded-xl border border-purple-100 flex items-center justify-between gap-4">
-                                    <div class="min-w-0">
-                                        <p class="text-sm font-bold text-slate-800 truncate">${escapeHtml(s.name)}</p>
-                                        <p class="text-xs text-slate-500 font-mono">${escapeHtml(s.studentId)} (${escapeHtml(s.grade)})</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${activeStudents.map(s => {
+                                const currentMark = (studentMarks[s.id] && studentMarks[s.id][cat.id] !== undefined) ? studentMarks[s.id][cat.id] : 75;
+                                return `
+                                    <div class="${cols.bg} p-4 rounded-xl border ${cols.border} flex items-center justify-between gap-4">
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-bold text-slate-800 truncate">${escapeHtml(s.name)}</p>
+                                            <p class="text-xs text-slate-500 font-mono">${escapeHtml(s.studentId)} (${escapeHtml(s.grade)})</p>
+                                        </div>
+                                        <div class="flex items-center space-x-3 w-48">
+                                            <input type="range" min="0" max="100" value="${currentMark}" oninput="updateMark('${s.id}', '${cat.id}', this.value)" class="w-full accent-fuchsia-600 cursor-pointer">
+                                            <span id="val_${s.id}_${cat.id}" class="text-xs font-black text-purple-800 w-10 text-right">${currentMark}%</span>
+                                        </div>
                                     </div>
-                                    <div class="flex items-center space-x-3 w-48">
-                                        <input type="range" min="0" max="100" value="${currentMark}" oninput="updateMark('${s.id}', '${cat.id}', this.value)" class="w-full accent-fuchsia-600 cursor-pointer">
-                                        <span id="val_${s.id}_${cat.id}" class="text-xs font-black text-purple-800 w-10 text-right">${currentMark}%</span>
-                                    </div>
-                                </div>
-                            `;
-                        }).join('')}
+                                `;
+                            }).join('')}
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
 
             lucide.createIcons();
         }
@@ -992,7 +1009,7 @@
                 }
             } else {
                 teachers = [
-                    { username: 'science_teacher', name: 'Mr. Moayed Alkhliefat', subject: 'Science', password: 'password123', email: 'moayed@ats-aqb.edu' }
+                    { username: 'science_teacher', name: 'Mr. Moayed Alkhliefat', subject: 'Science', password: 'password123' }
                 ];
                 saveTeachersToStorage();
             }
@@ -1004,6 +1021,7 @@
         }
 
         function openTeacherAccountModal() {
+            document.getElementById('teacherModal').classList.add('hidden'); // placeholder
             document.getElementById('teacherModal').classList.remove('hidden');
         }
 
@@ -1017,7 +1035,6 @@
             const usernameInput = document.getElementById('tUsername').value.trim();
             const subjectInput = document.getElementById('tSubject').value.trim();
             const passwordInput = document.getElementById('tPassword').value.trim();
-            const emailInput = document.getElementById('tEmail').value.trim();
 
             if (!nameInput || !usernameInput || !passwordInput) {
                 alert('Please fill in Name, Username, and Password.');
@@ -1033,8 +1050,7 @@
                 name: nameInput,
                 username: usernameInput,
                 subject: subjectInput || 'General',
-                password: passwordInput,
-                email: emailInput
+                password: passwordInput
             };
 
             teachers.push(newTeacher);
@@ -1046,21 +1062,20 @@
             document.getElementById('tUsername').value = '';
             document.getElementById('tSubject').value = '';
             document.getElementById('tPassword').value = '';
-            document.getElementById('tEmail').value = '';
 
             renderTeachers();
             populateTeacherDropdown();
-            alert('Teacher account created successfully! They can now select and log in with this account.');
+            alert('Teacher account created successfully!');
         }
 
         function renderTeachers() {
             const tbody = document.getElementById('teachersTableBody');
+            if (!tbody) return;
             tbody.innerHTML = teachers.map(t => `
                 <tr class="hover:bg-purple-50/50 transition">
                     <td class="px-6 py-4 text-sm font-bold text-slate-900">${escapeHtml(t.name)}</td>
                     <td class="px-6 py-4 text-sm font-mono text-purple-700 bg-purple-50/60 rounded px-2">${escapeHtml(t.username)}</td>
                     <td class="px-6 py-4 text-sm font-medium text-slate-700">${escapeHtml(t.subject)}</td>
-                    <td class="px-6 py-4 text-sm text-slate-500">${escapeHtml(t.email || 'N/A')}</td>
                     <td class="px-6 py-4 text-right text-sm font-medium">
                         <button onclick="deleteTeacher('${t.username}')" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </td>
@@ -1080,7 +1095,7 @@
             renderTeachers();
         }
 
-        // Students Management
+        // Students Management (Vertical List under each other)
         async function loadStudents() {
             if (supabaseClient) {
                 try {
@@ -1121,6 +1136,7 @@
             } else {
                 loadFromLocalStorage();
             }
+            populateFilterDropdowns();
             renderStudents();
             updateStats();
         }
@@ -1175,10 +1191,30 @@
             localStorage.setItem('ats_aqb_students', JSON.stringify(students));
         }
 
+        function populateFilterDropdowns() {
+            const accessible = getAccessibleStudents();
+            const gradeSelect = document.getElementById('gradeFilter');
+            const sectionSelect = document.getElementById('sectionFilter');
+
+            const currentGrade = gradeSelect.value;
+            const currentSection = sectionSelect.value;
+
+            const grades = [...new Set(accessible.map(s => s.grade))].sort();
+            const sections = [...new Set(accessible.map(s => s.section))].sort();
+
+            gradeSelect.innerHTML = '<option value="">All Grades</option>' + grades.map(g => `<option value="${g}">${g}</option>`).join('');
+            sectionSelect.innerHTML = '<option value="">All Sections</option>' + sections.map(sec => `<option value="${sec}">${sec}</option>`).join('');
+
+            gradeSelect.value = currentGrade;
+            sectionSelect.value = currentSection;
+        }
+
         function renderStudents() {
-            const tbody = document.getElementById('studentsTableBody');
+            const container = document.getElementById('studentsListContainer');
             const emptyState = document.getElementById('emptyState');
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const gradeFilter = document.getElementById('gradeFilter').value;
+            const sectionFilter = document.getElementById('sectionFilter').value;
             const statusFilter = document.getElementById('statusFilter').value;
 
             const accessibleStudents = getAccessibleStudents();
@@ -1186,59 +1222,54 @@
             const filtered = accessibleStudents.filter(s => {
                 const matchesSearch = (s.name && s.name.toLowerCase().includes(searchTerm)) ||
                                       (s.studentId && s.studentId.toLowerCase().includes(searchTerm)) ||
-                                      (s.grade && s.grade.toLowerCase().includes(searchTerm)) ||
-                                      (s.section && s.section.toLowerCase().includes(searchTerm)) ||
                                       (s.email && s.email.toLowerCase().includes(searchTerm));
+                const matchesGrade = gradeFilter === '' || s.grade === gradeFilter;
+                const matchesSection = sectionFilter === '' || s.section === sectionFilter;
                 const matchesStatus = statusFilter === '' || s.status === statusFilter;
-                return matchesSearch && matchesStatus;
+                return matchesSearch && matchesGrade && matchesSection && matchesStatus;
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = '';
+                container.innerHTML = '';
                 emptyState.classList.remove('hidden');
                 return;
             }
 
             emptyState.classList.add('hidden');
-            tbody.innerHTML = filtered.map(s => `
-                <tr class="hover:bg-purple-50/40 transition">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-violet-500 to-fuchsia-500 text-white font-black flex items-center justify-center text-sm mr-3 shadow-md shadow-fuchsia-500/20">
-                                ${getInitials(s.name)}
-                            </div>
-                            <div>
-                                <div class="text-sm font-bold text-slate-900">${escapeHtml(s.name)}</div>
-                                <div class="text-xs text-slate-500 truncate max-w-xs font-medium">${escapeHtml(s.notes || 'No notes added')}</div>
-                            </div>
+            
+            // Render students as vertical cards under each other as a list
+            container.innerHTML = filtered.map(s => `
+                <div class="bg-white/95 backdrop-blur-md p-5 rounded-2xl border border-purple-100 shadow-sm hover:shadow-md transition flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div class="flex items-center space-x-4 min-w-0">
+                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-500 to-fuchsia-500 text-white font-black flex items-center justify-center text-base shadow-md shadow-fuchsia-500/20 flex-shrink-0">
+                            ${getInitials(s.name)}
                         </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-semibold text-purple-700 bg-purple-50/50">
-                        ${escapeHtml(s.studentId)}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-semibold">
-                        <div>${escapeHtml(s.grade)}</div>
-                        <div class="text-xs text-slate-400 font-medium">${escapeHtml(s.section)}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full shadow-sm ${getStatusBadgeClass(s.status)}">
-                            ${escapeHtml(s.status)}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-600 font-medium">
-                        <div>${s.email ? `<a href="mailto:${s.email}" class="hover:text-fuchsia-600 underline">${escapeHtml(s.email)}</a>` : 'No email'}</div>
-                        <div class="text-slate-400">${s.phone || ''}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500 font-medium">
-                        ${formatDate(s.created_at)}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div class="flex items-center justify-end space-x-2">
-                            <button onclick="editStudent('${s.id}')" title="Edit Student" class="p-2 text-slate-400 hover:text-fuchsia-600 hover:bg-fuchsia-50 rounded-xl transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                            <button onclick="deleteStudent('${s.id}')" title="Delete Student" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <div class="min-w-0">
+                            <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+                                <h4 class="text-base font-bold text-slate-900 truncate">${escapeHtml(s.name)}</h4>
+                                <span class="px-2.5 py-0.5 text-xs font-mono font-bold bg-purple-50 text-purple-700 rounded-lg border border-purple-100">${escapeHtml(s.studentId)}</span>
+                                <span class="px-2.5 py-0.5 text-xs font-bold rounded-full ${getStatusBadgeClass(s.status)}">${escapeHtml(s.status)}</span>
+                            </div>
+                            <div class="flex items-center space-x-3 text-xs text-slate-500 mt-1 font-medium flex-wrap">
+                                <span><strong>Grade:</strong> ${escapeHtml(s.grade)}</span>
+                                <span>•</span>
+                                <span><strong>Section:</strong> ${escapeHtml(s.section)}</span>
+                                <span>•</span>
+                                <span><strong>Contact:</strong> ${escapeHtml(s.email || s.phone || 'No contact')}</span>
+                            </div>
+                            ${s.notes ? `<p class="text-xs text-slate-600 mt-1.5 bg-purple-50/50 px-3 py-1.5 rounded-xl border border-purple-100/60 font-medium"><strong>Notes:</strong> ${escapeHtml(s.notes)}</p>` : ''}
                         </div>
-                    </td>
-                </tr>
+                    </div>
+
+                    <div class="flex items-center space-x-2 self-end md:self-center flex-shrink-0">
+                        <button onclick="editStudent('${s.id}')" title="Edit Student" class="p-2 text-slate-400 hover:text-fuchsia-600 hover:bg-fuchsia-50 rounded-xl transition border border-slate-200">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="deleteStudent('${s.id}')" title="Delete Student" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition border border-slate-200">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
             `).join('');
 
             lucide.createIcons();
