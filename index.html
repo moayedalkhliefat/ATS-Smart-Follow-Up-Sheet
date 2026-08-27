@@ -95,8 +95,8 @@
             <!-- Navigation Tabs & User Profile -->
             <div class="flex items-center space-x-3">
                 <nav id="navTabs" class="hidden sm:flex items-center space-x-1 bg-purple-50/80 p-1.5 rounded-xl text-xs font-semibold border border-purple-100">
-                    <button onclick="switchTab('students')" id="tabStudentsBtn" class="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md transition">Students</button>
-                    <button onclick="switchTab('categories')" id="tabCategoriesBtn" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition">My Categories & Marks</button>
+                    <button onclick="switchTab('students')" id="tabStudentsBtn" class="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md transition">Students & Marks Sliders</button>
+                    <button onclick="switchTab('categories')" id="tabCategoriesBtn" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition">Manage Categories</button>
                     <button onclick="switchTab('reports')" id="tabReportsBtn" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition">Reports</button>
                     <!-- Manage Teachers tab only for Admin -->
                     <button onclick="switchTab('teachers')" id="tabTeachersBtn" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition hidden items-center space-x-1"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i><span>Manage Teachers</span></button>
@@ -168,7 +168,7 @@
                 </div>
             </div>
 
-            <!-- Students List Section (Under each other as vertical cards / list items) -->
+            <!-- Students List Section (With interactive marks sliders for each student) -->
             <div id="studentsListContainer" class="space-y-4">
                 <!-- Rendered dynamically -->
             </div>
@@ -193,21 +193,21 @@
             </div>
         </div>
 
-        <!-- CATEGORIES & SLIDER MARKS VIEW -->
+        <!-- MANAGE CATEGORIES VIEW -->
         <div id="categoriesView" class="space-y-6 hidden">
             <div class="bg-white/95 backdrop-blur-md p-6 rounded-2xl border border-purple-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
-                    <h2 class="text-lg font-black text-slate-900">My Custom Categories & Marks Sliders</h2>
-                    <p class="text-xs text-slate-500 mt-0.5 font-medium">Create your own colored evaluation categories and assign marks using interactive sliders (0–100).</p>
+                    <h2 class="text-lg font-black text-slate-900">Manage Evaluation Categories</h2>
+                    <p class="text-xs text-slate-500 mt-0.5 font-medium">Create or delete your custom colored evaluation categories (e.g. Quizzes, Homework, Behavior) which appear as sliders right inside each student's card.</p>
                 </div>
                 <button onclick="openCategoryModal()" class="inline-flex items-center space-x-2 px-4 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-95 transition shadow-lg shadow-fuchsia-500/20 rounded-xl">
                     <i data-lucide="folder-plus" class="w-4 h-4"></i>
-                    <span>Add My Category</span>
+                    <span>Add New Category</span>
                 </button>
             </div>
 
-            <!-- Categories List / Sliders Container -->
-            <div id="categoriesContainer" class="space-y-6">
+            <!-- Categories Manager List -->
+            <div id="categoriesManagerContainer" class="space-y-4">
                 <!-- Rendered dynamically -->
             </div>
         </div>
@@ -335,7 +335,7 @@
     <div id="categoryModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden">
         <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full mx-4 overflow-hidden border border-purple-100">
             <div class="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-4 border-b border-purple-100 flex items-center justify-between">
-                <h3 class="text-base font-black text-slate-900">Add My Custom Category</h3>
+                <h3 class="text-base font-black text-slate-900">Add Evaluation Category</h3>
                 <button onclick="closeCategoryModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
@@ -619,8 +619,6 @@
                                 studentId: studentId,
                                 grade: grade,
                                 section: section,
-                                email: '',
-                                phone: '',
                                 notes: `Imported via Excel/CSV.`,
                                 teacher: ownerTag,
                                 created_at: new Date().toISOString()
@@ -711,7 +709,8 @@
             saveCategoriesToStorage();
             closeCategoryModal();
             renderCategoriesView();
-            alert('Your custom colored category was added successfully!');
+            renderStudents();
+            alert('Your custom colored category was added successfully and is now available in student cards!');
         }
 
         function deleteCategory(catId) {
@@ -719,6 +718,7 @@
             categories = categories.filter(c => c.id !== catId);
             saveCategoriesToStorage();
             renderCategoriesView();
+            renderStudents();
         }
 
         function updateMark(studentId, catId, val) {
@@ -745,30 +745,19 @@
         }
 
         function renderCategoriesView() {
-            const container = document.getElementById('categoriesContainer');
+            const container = document.getElementById('categoriesManagerContainer');
             const ownerTag = (currentUser && currentUser.role === 'teacher') ? currentUser.username : null;
 
             const teacherCategories = (currentUser && currentUser.role === 'admin')
                 ? categories
                 : categories.filter(c => c.teacher === ownerTag);
-
-            const activeStudents = getAccessibleStudents();
             
             if (teacherCategories.length === 0) {
                 container.innerHTML = `
                     <div class="bg-white/95 p-12 rounded-2xl border border-purple-100 text-center space-y-3 shadow-sm">
                         <p class="text-slate-600 font-bold">You haven't created any custom categories yet.</p>
-                        <p class="text-xs text-slate-400">Click the button above to add your colored evaluation categories.</p>
-                        <button onclick="openCategoryModal()" class="mt-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl text-sm font-bold shadow">Add My First Category</button>
-                    </div>
-                `;
-                return;
-            }
-
-            if (activeStudents.length === 0) {
-                container.innerHTML = `
-                    <div class="bg-white/95 p-12 rounded-2xl border border-purple-100 text-center shadow-sm">
-                        <p class="text-slate-500 font-medium">No students found in your separate record sheet. Please add students first.</p>
+                        <p class="text-xs text-slate-400">Click the button above to add colored evaluation categories for your students.</p>
+                        <button onclick="openCategoryModal()" class="mt-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl text-sm font-bold shadow">Add First Category</button>
                     </div>
                 `;
                 return;
@@ -777,32 +766,17 @@
             container.innerHTML = teacherCategories.map(cat => {
                 const cols = getColorClasses(cat.color);
                 return `
-                    <div class="bg-white/95 backdrop-blur-md rounded-2xl border ${cols.border} shadow-sm p-6 space-y-4">
-                        <div class="flex items-center justify-between border-b border-purple-50 pb-3">
-                            <div class="flex items-center space-x-2.5">
-                                <span class="w-3.5 h-3.5 rounded-full ${cols.dot}"></span>
-                                <h3 class="text-base font-black text-slate-900">${escapeHtml(cat.name)}</h3>
+                    <div class="bg-white/95 backdrop-blur-md rounded-2xl border ${cols.border} shadow-sm p-5 flex items-center justify-between gap-4">
+                        <div class="flex items-center space-x-3">
+                            <span class="w-4 h-4 rounded-full ${cols.dot}"></span>
+                            <div>
+                                <h4 class="text-base font-black text-slate-900">${escapeHtml(cat.name)}</h4>
+                                <span class="text-xs text-slate-400 font-medium uppercase tracking-wider">Theme: ${cat.color}</span>
                             </div>
-                            <button onclick="deleteCategory('${cat.id}')" title="Delete Category" class="text-slate-400 hover:text-red-600 p-1.5 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            ${activeStudents.map(s => {
-                                const currentMark = (studentMarks[s.id] && studentMarks[s.id][cat.id] !== undefined) ? studentMarks[s.id][cat.id] : 75;
-                                return `
-                                    <div class="${cols.bg} p-4 rounded-xl border ${cols.border} flex items-center justify-between gap-4">
-                                        <div class="min-w-0">
-                                            <p class="text-sm font-bold text-slate-800 truncate">${escapeHtml(s.name)}</p>
-                                            <p class="text-xs text-slate-500 font-mono">${escapeHtml(s.studentId)} (${escapeHtml(s.grade)})</p>
-                                        </div>
-                                        <div class="flex items-center space-x-3 w-48">
-                                            <input type="range" min="0" max="100" value="${currentMark}" oninput="updateMark('${s.id}', '${cat.id}', this.value)" class="w-full ${cols.accent} cursor-pointer">
-                                            <span id="val_${s.id}_${cat.id}" class="text-xs font-black ${cols.text} w-10 text-right">${currentMark}%</span>
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
+                        <button onclick="deleteCategory('${cat.id}')" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition border border-slate-200">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
                     </div>
                 `;
             }).join('');
@@ -1157,6 +1131,10 @@
             const sectionFilter = document.getElementById('sectionFilter').value;
 
             const accessibleStudents = getAccessibleStudents();
+            const ownerTag = (currentUser && currentUser.role === 'teacher') ? currentUser.username : null;
+            const teacherCategories = (currentUser && currentUser.role === 'admin')
+                ? categories
+                : categories.filter(c => c.teacher === ownerTag);
 
             const filtered = accessibleStudents.filter(s => {
                 const matchesSearch = (s.name && s.name.toLowerCase().includes(searchTerm)) ||
@@ -1174,36 +1152,64 @@
 
             emptyState.classList.add('hidden');
             
-            container.innerHTML = filtered.map(s => `
-                <div class="bg-white/95 backdrop-blur-md p-5 rounded-2xl border border-purple-100 shadow-sm hover:shadow-md transition flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div class="flex items-center space-x-4 min-w-0">
-                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-500 to-fuchsia-500 text-white font-black flex items-center justify-center text-base shadow-md shadow-fuchsia-500/20 flex-shrink-0">
-                            ${getInitials(s.name)}
-                        </div>
-                        <div class="min-w-0">
-                            <div class="flex items-center space-x-2 flex-wrap gap-y-1">
-                                <h4 class="text-base font-bold text-slate-900 truncate">${escapeHtml(s.name)}</h4>
-                                <span class="px-2.5 py-0.5 text-xs font-mono font-bold bg-purple-50 text-purple-700 rounded-lg border border-purple-100">${escapeHtml(s.studentId)}</span>
+            // Render students as vertical cards with their custom evaluation category sliders right inside each card
+            container.innerHTML = filtered.map(s => {
+                const marks = studentMarks[s.id] || {};
+                return `
+                    <div class="bg-white/95 backdrop-blur-md p-6 rounded-3xl border border-purple-100 shadow-sm hover:shadow-md transition space-y-4">
+                        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                            <div class="flex items-center space-x-4 min-w-0">
+                                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-500 to-fuchsia-500 text-white font-black flex items-center justify-center text-base shadow-md shadow-fuchsia-500/20 flex-shrink-0">
+                                    ${getInitials(s.name)}
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+                                        <h4 class="text-base font-bold text-slate-900 truncate">${escapeHtml(s.name)}</h4>
+                                        <span class="px-2.5 py-0.5 text-xs font-mono font-bold bg-purple-50 text-purple-700 rounded-lg border border-purple-100">${escapeHtml(s.studentId)}</span>
+                                    </div>
+                                    <div class="flex items-center space-x-3 text-xs text-slate-500 mt-1 font-medium flex-wrap">
+                                        <span><strong>Grade:</strong> ${escapeHtml(s.grade)}</span>
+                                        <span>•</span>
+                                        <span><strong>Section:</strong> ${escapeHtml(s.section)}</span>
+                                    </div>
+                                    ${s.notes ? `<p class="text-xs text-slate-600 mt-1.5 bg-purple-50/50 px-3 py-1.5 rounded-xl border border-purple-100/60 font-medium"><strong>Notes:</strong> ${escapeHtml(s.notes)}</p>` : ''}
+                                </div>
                             </div>
-                            <div class="flex items-center space-x-3 text-xs text-slate-500 mt-1 font-medium flex-wrap">
-                                <span><strong>Grade:</strong> ${escapeHtml(s.grade)}</span>
-                                <span>•</span>
-                                <span><strong>Section:</strong> ${escapeHtml(s.section)}</span>
-                            </div>
-                            ${s.notes ? `<p class="text-xs text-slate-600 mt-1.5 bg-purple-50/50 px-3 py-1.5 rounded-xl border border-purple-100/60 font-medium"><strong>Notes:</strong> ${escapeHtml(s.notes)}</p>` : ''}
-                        </div>
-                    </div>
 
-                    <div class="flex items-center space-x-2 self-end md:self-center flex-shrink-0">
-                        <button onclick="editStudent('${s.id}')" title="Edit Student" class="p-2 text-slate-400 hover:text-fuchsia-600 hover:bg-fuchsia-50 rounded-xl transition border border-slate-200">
-                            <i data-lucide="edit-3" class="w-4 h-4"></i>
-                        </button>
-                        <button onclick="deleteStudent('${s.id}')" title="Delete Student" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition border border-slate-200">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
+                            <div class="flex items-center space-x-2 self-end md:self-center flex-shrink-0">
+                                <button onclick="editStudent('${s.id}')" title="Edit Student" class="p-2 text-slate-400 hover:text-fuchsia-600 hover:bg-fuchsia-50 rounded-xl transition border border-slate-200">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="deleteStudent('${s.id}')" title="Delete Student" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition border border-slate-200">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Sliders for Student Evaluation Categories -->
+                        ${teacherCategories.length > 0 ? `
+                            <div class="border-t border-purple-50 pt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                ${teacherCategories.map(cat => {
+                                    const cols = getColorClasses(cat.color);
+                                    const currentMark = (marks[cat.id] !== undefined) ? marks[cat.id] : 75;
+                                    return `
+                                        <div class="${cols.bg} p-3 rounded-xl border ${cols.border} flex items-center justify-between gap-3">
+                                            <div class="min-w-0 flex items-center space-x-2">
+                                                <span class="w-2.5 h-2.5 rounded-full ${cols.dot} flex-shrink-0"></span>
+                                                <span class="text-xs font-bold text-slate-800 truncate">${escapeHtml(cat.name)}</span>
+                                            </div>
+                                            <div class="flex items-center space-x-2 w-32 flex-shrink-0">
+                                                <input type="range" min="0" max="100" value="${currentMark}" oninput="updateMark('${s.id}', '${cat.id}', this.value)" class="w-full ${cols.accent} cursor-pointer">
+                                                <span id="val_${s.id}_${cat.id}" class="text-[11px] font-black ${cols.text} w-8 text-right">${currentMark}%</span>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        ` : ''}
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
 
             lucide.createIcons();
         }
