@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Smart Follow-Up Sheet</title>
+    <title>Student Smart Follow-Up Sheet | ATS-AQB</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -30,6 +30,50 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans">
 
+    <!-- LOGIN MODAL (Required on load if not logged in) -->
+    <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform transition-all">
+            <div class="bg-gradient-to-r from-indigo-900 to-indigo-800 px-6 py-6 text-white text-center">
+                <div class="bg-white/10 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i data-lucide="graduation-cap" class="w-6 h-6"></i>
+                </div>
+                <h2 class="text-xl font-bold">ATS-AQB Portal</h2>
+                <p class="text-xs text-indigo-200 mt-1">Student Smart Follow-Up System</p>
+                <div class="mt-2 text-[11px] bg-indigo-700/60 inline-block px-3 py-1 rounded-full text-indigo-100">
+                    Created by: <strong>Mr. Moayed Alkhliefat</strong> (Science Teacher)
+                </div>
+            </div>
+            <form onsubmit="handleLogin(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Select Role / Account</label>
+                    <select id="loginRole" onchange="toggleLoginInputs()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <option value="admin">Admin Account</option>
+                        <option value="teacher">Teacher Account</option>
+                    </select>
+                </div>
+
+                <div id="teacherSelectGroup" class="hidden">
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Select Teacher</label>
+                    <select id="loginTeacherUser" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <!-- Dynamically populated -->
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Password / Passcode</label>
+                    <input type="password" id="loginPassword" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Enter password (default admin: admin123)">
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition shadow">
+                        Login to Portal
+                    </button>
+                </div>
+                <p class="text-[11px] text-slate-400 text-center mt-2">Default Admin Password: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">admin123</code></p>
+            </form>
+        </div>
+    </div>
+
     <!-- Top Navbar -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -38,22 +82,27 @@
                     <i data-lucide="graduation-cap" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <h1 class="text-lg font-bold text-slate-900 tracking-tight">Student Smart Follow-Up Sheet</h1>
-                    <p class="text-xs text-slate-500">Cloud-Synced Student Management System</p>
+                    <h1 class="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                        <span>ATS-AQB Student Follow-Up</span>
+                        <span class="text-xs px-2 py-0.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-full font-medium">Science Dept</span>
+                    </h1>
+                    <p class="text-xs text-slate-500">Builder: <span class="font-semibold text-slate-700">Mr. Moayed Alkhliefat</span></p>
                 </div>
             </div>
 
-            <!-- Actions & Status -->
+            <!-- Navigation Tabs & User Profile -->
             <div class="flex items-center space-x-3">
-                <div class="flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span>Cloud Connected</span>
-                </div>
+                <nav id="navTabs" class="hidden sm:flex items-center space-x-1 bg-slate-100 p-1 rounded-lg text-xs font-medium">
+                    <button onclick="switchTab('students')" id="tabStudentsBtn" class="px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-sm transition">Students</button>
+                    <button onclick="switchTab('teachers')" id="tabTeachersBtn" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition hidden">Manage Teachers</button>
+                </nav>
 
-                <button onclick="openStudentModal()" class="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-lg text-white bg-brand-600 hover:bg-brand-700 transition shadow-sm">
-                    <i data-lucide="user-plus" class="w-4 h-4"></i>
-                    <span>Add Student</span>
-                </button>
+                <div class="flex items-center space-x-2 pl-2 border-l border-slate-200">
+                    <span id="currentUserBadge" class="text-xs font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg">Admin</span>
+                    <button onclick="logout()" title="Logout" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </header>
@@ -61,96 +110,134 @@
     <!-- Main Container -->
     <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-        <!-- Dashboard Stats Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <p class="text-xs font-medium text-slate-500 uppercase">Total Students</p>
-                <p id="statTotal" class="text-2xl font-bold text-slate-900 mt-1">0</p>
+        <!-- STUDENTS VIEW -->
+        <div id="studentsView" class="space-y-8">
+            <!-- Dashboard Stats Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-medium text-slate-500 uppercase">Total Students</p>
+                    <p id="statTotal" class="text-2xl font-bold text-slate-900 mt-1">0</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-medium text-slate-500 uppercase">Enrolled</p>
+                    <p id="statEnrolled" class="text-2xl font-bold text-blue-600 mt-1">0</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-medium text-slate-500 uppercase">Pending</p>
+                    <p id="statPending" class="text-2xl font-bold text-amber-600 mt-1">0</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-medium text-slate-500 uppercase">Active</p>
+                    <p id="statActive" class="text-2xl font-bold text-emerald-600 mt-1">0</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-medium text-slate-500 uppercase">Graduated</p>
+                    <p id="statGraduated" class="text-2xl font-bold text-purple-600 mt-1">0</p>
+                </div>
             </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <p class="text-xs font-medium text-slate-500 uppercase">Enrolled</p>
-                <p id="statEnrolled" class="text-2xl font-bold text-blue-600 mt-1">0</p>
-            </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <p class="text-xs font-medium text-slate-500 uppercase">Pending</p>
-                <p id="statPending" class="text-2xl font-bold text-amber-600 mt-1">0</p>
-            </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <p class="text-xs font-medium text-slate-500 uppercase">Active</p>
-                <p id="statActive" class="text-2xl font-bold text-emerald-600 mt-1">0</p>
-            </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <p class="text-xs font-medium text-slate-500 uppercase">Graduated</p>
-                <p id="statGraduated" class="text-2xl font-bold text-purple-600 mt-1">0</p>
-            </div>
-        </div>
 
-        <!-- Search, Filter & Actions Bar -->
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-            <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto flex-grow">
-                <!-- Search Box -->
-                <div class="relative w-full sm:w-80">
-                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                        <i data-lucide="search" class="w-4 h-4"></i>
-                    </span>
-                    <input type="text" id="searchInput" oninput="filterStudents()" placeholder="Search by name, ID, grade..." class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+            <!-- Search, Filter & Actions Bar -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto flex-grow">
+                    <!-- Search Box -->
+                    <div class="relative w-full sm:w-80">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="search" class="w-4 h-4"></i>
+                        </span>
+                        <input type="text" id="searchInput" oninput="filterStudents()" placeholder="Search by name, ID, grade..." class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                    </div>
+
+                    <!-- Status Filter -->
+                    <select id="statusFilter" onchange="filterStudents()" class="w-full sm:w-auto px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="">All Statuses</option>
+                        <option value="Enrolled">Enrolled</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Active">Active</option>
+                        <option value="Graduated">Graduated</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
                 </div>
 
-                <!-- Status Filter -->
-                <select id="statusFilter" onchange="filterStudents()" class="w-full sm:w-auto px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
-                    <option value="">All Statuses</option>
-                    <option value="Enrolled">Enrolled</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Active">Active</option>
-                    <option value="Graduated">Graduated</option>
-                    <option value="Inactive">Inactive</option>
-                </select>
+                <!-- Export / Add Student -->
+                <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
+                    <button onclick="loadStudents()" title="Refresh Data" class="p-2 text-slate-600 hover:text-brand-600 hover:bg-slate-100 rounded-lg border border-slate-300 transition">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="exportCSV()" class="inline-flex items-center space-x-1.5 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span>Export CSV</span>
+                    </button>
+                    <button onclick="openStudentModal()" class="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-lg text-white bg-brand-600 hover:bg-brand-700 transition shadow-sm">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i>
+                        <span>Add Student</span>
+                    </button>
+                </div>
             </div>
 
-            <!-- Export & Refresh -->
-            <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
-                <button onclick="loadStudents()" title="Refresh Data" class="p-2 text-slate-600 hover:text-brand-600 hover:bg-slate-100 rounded-lg border border-slate-300 transition">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                </button>
-                <button onclick="exportCSV()" class="inline-flex items-center space-x-1.5 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition">
-                    <i data-lucide="download" class="w-4 h-4"></i>
-                    <span>Export CSV</span>
-                </button>
+            <!-- Students Table Section -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Student Name</th>
+                                <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Student ID</th>
+                                <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Grade & Section</th>
+                                <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Contact</th>
+                                <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Added Date</th>
+                                <th scope="col" class="px-6 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody" class="divide-y divide-slate-200 bg-white">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="hidden text-center py-16 px-4">
+                    <div class="bg-slate-100 text-slate-400 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="users" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-base font-semibold text-slate-800">No students found</h3>
+                    <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">Get started by adding your first student record.</p>
+                    <button onclick="openStudentModal()" class="mt-4 inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-lg text-white bg-brand-600 hover:bg-brand-700 transition">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i>
+                        <span>Add Student</span>
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Students Table Section -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
+        <!-- TEACHERS MANAGEMENT VIEW (Admin Only) -->
+        <div id="teachersView" class="space-y-6 hidden">
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Manage Teacher Accounts</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Admin can add, view, and remove teacher accounts for the ATS-AQB portal.</p>
+                </div>
+                <button onclick="openTeacherAccountModal()" class="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-lg text-white bg-brand-600 hover:bg-brand-700 transition shadow-sm">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    <span>Add Teacher Account</span>
+                </button>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <table class="min-w-full divide-y divide-slate-200">
                     <thead class="bg-slate-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Student Name</th>
-                            <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Student ID</th>
-                            <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Grade & Section</th>
-                            <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                            <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Contact</th>
-                            <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Added Date</th>
-                            <th scope="col" class="px-6 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                            <th class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Teacher Name</th>
+                            <th class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Username</th>
+                            <th class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Subject</th>
+                            <th class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>
+                            <th class="px-6 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="studentsTableBody" class="divide-y divide-slate-200 bg-white">
-                        <!-- Populated by JavaScript -->
+                    <tbody id="teachersTableBody" class="divide-y divide-slate-200 bg-white">
+                        <!-- Populated by JS -->
                     </tbody>
                 </table>
-            </div>
-
-            <!-- Empty State -->
-            <div id="emptyState" class="hidden text-center py-16 px-4">
-                <div class="bg-slate-100 text-slate-400 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i data-lucide="users" class="w-8 h-8"></i>
-                </div>
-                <h3 class="text-base font-semibold text-slate-800">No students found</h3>
-                <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">Get started by adding your first student record.</p>
-                <button onclick="openStudentModal()" class="mt-4 inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-lg text-white bg-brand-600 hover:bg-brand-700 transition">
-                    <i data-lucide="user-plus" class="w-4 h-4"></i>
-                    <span>Add Student</span>
-                </button>
             </div>
         </div>
 
@@ -159,8 +246,11 @@
     <!-- Footer -->
     <footer class="bg-white border-t border-slate-200 mt-auto py-6">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-            <p>Student Smart Follow-Up Sheet — Cloud-Synced Database</p>
-            <p>100% Free Online Storage</p>
+            <div>
+                <p class="font-semibold text-slate-700">ATS-AQB Student Smart Follow-Up Sheet</p>
+                <p class="text-slate-500 mt-0.5">Created & Built by: <strong class="text-slate-800">Mr. Moayed Alkhliefat</strong> (Science Teacher)</p>
+            </div>
+            <p>100% Free Cloud Storage & Hosting</p>
         </div>
     </footer>
 
@@ -201,11 +291,11 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Grade *</label>
-                        <input type="text" id="grade" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="e.g. Grade 10 / Year 11">
+                        <input type="text" id="grade" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="e.g. Grade 10">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Section *</label>
-                        <input type="text" id="section" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="e.g. Section A / Blue">
+                        <input type="text" id="section" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="e.g. Section A">
                     </div>
                 </div>
 
@@ -222,7 +312,7 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Follow-Up Notes</label>
-                    <textarea id="notes" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Add academic performance notes, attendance remarks, parent contact details..."></textarea>
+                    <textarea id="notes" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Add academic performance notes, attendance remarks..."></textarea>
                 </div>
 
                 <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200">
@@ -233,17 +323,56 @@
         </div>
     </div>
 
+    <!-- ADD TEACHER ACCOUNT MODAL (Admin Only) -->
+    <div id="teacherModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-slate-900">Add Teacher Account</h3>
+                <button onclick="closeTeacherAccountModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="handleTeacherSubmit(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Teacher Full Name *</label>
+                    <input type="text" id="tName" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="e.g. Mr. John Doe">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Username *</label>
+                    <input type="text" id="tUsername" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="e.g. johndoe">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Subject *</label>
+                    <input type="text" id="tSubject" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="e.g. Physics / Chemistry">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Password *</label>
+                    <input type="password" id="tPassword" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Teacher account password">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Email</label>
+                    <input type="email" id="tEmail" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="john@school.edu">
+                </div>
+                <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200">
+                    <button type="button" onclick="closeTeacherAccountModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition shadow">Create Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- JavaScript Application Logic -->
     <script>
-        // Initialize Lucide icons
         lucide.createIcons();
 
-        // Supabase configuration (pre-connected)
+        // Supabase configuration
         const SUPABASE_URL = 'https://idfwwncwtwkwxtwpkato.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkZnd3bmN3dHdrd3h0d3BrYXRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTgyMzEsImV4cCI6MjEwMzM3NDIzMX0.bG5xiin2OJAn69rqIA1CSohQIsC3nDxeBo3ESkaq7oE';
 
         let supabaseClient = null;
         let students = [];
+        let teachers = [];
+        let currentUser = null; // { role: 'admin'|'teacher', username: '', name: '' }
 
         try {
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -251,11 +380,202 @@
             console.error('Supabase init error:', e);
         }
 
-        // Load Students from Supabase (fallback to LocalStorage)
+        // Initialize App & Login Check
+        window.addEventListener('DOMContentLoaded', () => {
+            loadTeachersFromStorage();
+            populateTeacherDropdown();
+            
+            const savedSession = localStorage.getItem('ats_aqb_session');
+            if (savedSession) {
+                try {
+                    currentUser = JSON.parse(savedSession);
+                    document.getElementById('loginModal').classList.add('hidden');
+                    applyUserPermissions();
+                    loadStudents();
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        });
+
+        function toggleLoginInputs() {
+            const role = document.getElementById('loginRole').value;
+            const teacherGroup = document.getElementById('teacherSelectGroup');
+            if (role === 'teacher') {
+                teacherGroup.classList.remove('hidden');
+                populateTeacherDropdown();
+            } else {
+                teacherGroup.classList.add('hidden');
+            }
+        }
+
+        function populateTeacherDropdown() {
+            const select = document.getElementById('loginTeacherUser');
+            if (teachers.length === 0) {
+                select.innerHTML = '<option value="">No teachers found (Ask Admin to create one)</option>';
+                return;
+            }
+            select.innerHTML = teachers.map(t => `<option value="${t.username}">${t.name} (${t.subject})</option>`).join('');
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const role = document.getElementById('loginRole').value;
+            const password = document.getElementById('loginPassword').value;
+
+            if (role === 'admin') {
+                if (password === 'admin123' || password === 'admin') {
+                    currentUser = { role: 'admin', username: 'admin', name: 'Mr. Moayed Alkhliefat (Admin)' };
+                } else {
+                    alert('Incorrect admin password. (Default is admin123)');
+                    return;
+                }
+            } else {
+                const username = document.getElementById('loginTeacherUser').value;
+                const teacher = teachers.find(t => t.username === username);
+                if (!teacher) {
+                    alert('Please select a valid teacher account.');
+                    return;
+                }
+                if (password === teacher.password || password === 'teacher123') {
+                    currentUser = { role: 'teacher', username: teacher.username, name: teacher.name, subject: teacher.subject };
+                } else {
+                    alert('Incorrect password for teacher account.');
+                    return;
+                }
+            }
+
+            localStorage.setItem('ats_aqb_session', JSON.stringify(currentUser));
+            document.getElementById('loginModal').classList.add('hidden');
+            applyUserPermissions();
+            loadStudents();
+        }
+
+        function applyUserPermissions() {
+            const badge = document.getElementById('currentUserBadge');
+            const tabTeachersBtn = document.getElementById('tabTeachersBtn');
+
+            if (currentUser.role === 'admin') {
+                badge.textContent = 'Admin: Mr. Moayed Alkhliefat';
+                tabTeachersBtn.classList.remove('hidden');
+            } else {
+                badge.textContent = `Teacher: ${currentUser.name}`;
+                tabTeachersBtn.classList.add('hidden');
+                switchTab('students');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('ats_aqb_session');
+            currentUser = null;
+            document.getElementById('loginModal').classList.remove('hidden');
+        }
+
+        function switchTab(tab) {
+            const studentsView = document.getElementById('studentsView');
+            const teachersView = document.getElementById('teachersView');
+            const studentsBtn = document.getElementById('tabStudentsBtn');
+            const teachersBtn = document.getElementById('tabTeachersBtn');
+
+            if (tab === 'students') {
+                studentsView.classList.remove('hidden');
+                teachersView.classList.add('hidden');
+                studentsBtn.className = "px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-sm transition";
+                teachersBtn.className = "px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition";
+                loadStudents();
+            } else if (tab === 'teachers' && currentUser.role === 'admin') {
+                teachersView.classList.remove('hidden');
+                studentsView.classList.add('hidden');
+                teachersBtn.className = "px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-sm transition";
+                studentsBtn.className = "px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition";
+                renderTeachers();
+            }
+        }
+
+        // Teachers Management
+        function loadTeachersFromStorage() {
+            const data = localStorage.getItem('ats_aqb_teachers');
+            if (data) {
+                try {
+                    teachers = JSON.parse(data);
+                } catch (e) {
+                    teachers = [];
+                }
+            } else {
+                // Default initial teacher
+                teachers = [
+                    { username: 'science1', name: 'Mr. Moayed Alkhliefat', subject: 'Science', password: 'password123', email: 'moayed@ats-aqb.edu' }
+                ];
+                saveTeachersToStorage();
+            }
+        }
+
+        function saveTeachersToStorage() {
+            localStorage.setItem('ats_aqb_teachers', JSON.stringify(teachers));
+            populateTeacherDropdown();
+        }
+
+        function openTeacherAccountModal() {
+            document.getElementById('teacherModal').classList.remove('hidden');
+        }
+
+        function closeTeacherAccountModal() {
+            document.getElementById('teacherModal').classList.add('hidden');
+        }
+
+        function handleTeacherSubmit(event) {
+            event.preventDefault();
+            const newTeacher = {
+                name: document.getElementById('tName').value,
+                username: document.getElementById('tUsername').value,
+                subject: document.getElementById('tSubject').value,
+                password: document.getElementById('tPassword').value,
+                email: document.getElementById('tEmail').value
+            };
+
+            if (teachers.some(t => t.username === newTeacher.username)) {
+                alert('Username already exists. Choose another username.');
+                return;
+            }
+
+            teachers.push(newTeacher);
+            saveTeachersToStorage();
+            closeTeacherAccountModal();
+            renderTeachers();
+            alert('Teacher account created successfully!');
+        }
+
+        function renderTeachers() {
+            const tbody = document.getElementById('teachersTableBody');
+            tbody.innerHTML = teachers.map(t => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="px-6 py-4 text-sm font-semibold text-slate-900">${escapeHtml(t.name)}</td>
+                    <td class="px-6 py-4 text-sm font-mono text-slate-600">${escapeHtml(t.username)}</td>
+                    <td class="px-6 py-4 text-sm text-slate-700">${escapeHtml(t.subject)}</td>
+                    <td class="px-6 py-4 text-sm text-slate-500">${escapeHtml(t.email || 'N/A')}</td>
+                    <td class="px-6 py-4 text-right text-sm font-medium">
+                        <button onclick="deleteTeacher('${t.username}')" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function deleteTeacher(username) {
+            if (teachers.length <= 1) {
+                alert('You must keep at least one teacher account.');
+                return;
+            }
+            if (!confirm('Are you sure you want to delete this teacher account?')) return;
+            teachers = teachers.filter(t => t.username !== username);
+            saveTeachersToStorage();
+            renderTeachers();
+        }
+
+        // Students Management
         async function loadStudents() {
             if (supabaseClient) {
                 try {
-                    // We map to the 'candidates' table in Supabase (repurposing columns: name=name, position=grade|section, resume_url=student_id, etc. or direct table)
                     const { data, error } = await supabaseClient
                         .from('candidates')
                         .select('*')
@@ -263,11 +583,10 @@
 
                     if (error) throw error;
                     
-                    // Map database fields to student model
                     students = (data || []).map(item => ({
                         id: item.id,
                         name: item.name || '',
-                        studentId: item.resume_url || '', // storing student ID in resume_url column
+                        studentId: item.resume_url || '',
                         grade: parseGrade(item.position).grade,
                         section: parseGrade(item.position).section,
                         status: item.status || 'Enrolled',
@@ -297,7 +616,7 @@
         }
 
         function loadFromLocalStorage() {
-            const localData = localStorage.getItem('student_sheet_records');
+            const localData = localStorage.getItem('ats_aqb_students');
             if (localData) {
                 try {
                     students = JSON.parse(localData);
@@ -309,26 +628,14 @@
                     {
                         id: '1',
                         name: 'Fatima Al-Zahra',
-                        studentId: 'STU-2026-101',
+                        studentId: 'AQB-2026-101',
                         grade: 'Grade 10',
                         section: 'Section A',
                         status: 'Enrolled',
-                        email: 'fatima@school.edu',
+                        email: 'fatima@ats-aqb.edu',
                         phone: '+971 50 234 5678',
-                        notes: 'Excellence in Mathematics and Science.',
+                        notes: 'Science fair project leader.',
                         created_at: new Date().toISOString()
-                    },
-                    {
-                        id: '2',
-                        name: 'Zayed Al-Nahyan',
-                        studentId: 'STU-2026-102',
-                        grade: 'Grade 11',
-                        section: 'Section B',
-                        status: 'Active',
-                        email: 'zayed@school.edu',
-                        phone: '+971 50 987 6543',
-                        notes: 'Debate team captain.',
-                        created_at: new Date(Date.now() - 86400000).toISOString()
                     }
                 ];
                 saveToLocalStorage();
@@ -336,10 +643,9 @@
         }
 
         function saveToLocalStorage() {
-            localStorage.setItem('student_sheet_records', JSON.stringify(students));
+            localStorage.setItem('ats_aqb_students', JSON.stringify(students));
         }
 
-        // Render Table
         function renderStudents() {
             const tbody = document.getElementById('studentsTableBody');
             const emptyState = document.getElementById('emptyState');
@@ -419,7 +725,6 @@
             document.getElementById('statGraduated').textContent = students.filter(s => s.status === 'Graduated').length;
         }
 
-        // Modal Controls
         function openStudentModal(student = null) {
             const modal = document.getElementById('studentModal');
             const title = document.getElementById('modalTitle');
@@ -458,11 +763,11 @@
 
             const studentData = {
                 name: document.getElementById('fullName').value,
-                position: combinedPosition, // storing grade | section in position column
+                position: combinedPosition,
                 status: document.getElementById('status').value,
                 email: document.getElementById('email').value,
                 phone: document.getElementById('phone').value,
-                resume_url: document.getElementById('studentId').value, // storing student ID in resume_url column
+                resume_url: document.getElementById('studentId').value,
                 notes: document.getElementById('notes').value
             };
 
@@ -509,7 +814,7 @@
             loadStudents();
         }
 
-        async function editStudent(id) {
+        function editStudent(id) {
             const student = students.find(s => s.id === id);
             if (student) {
                 openStudentModal(student);
@@ -538,7 +843,6 @@
             loadStudents();
         }
 
-        // Utility Helpers
         function getInitials(name) {
             if (!name) return 'ST';
             return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
@@ -588,14 +892,11 @@
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement('a');
             link.setAttribute('href', encodedUri);
-            link.setAttribute('download', 'student_records_export.csv');
+            link.setAttribute('download', 'ats_aqb_student_records.csv');
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         }
-
-        // Run on load
-        window.addEventListener('DOMContentLoaded', loadStudents);
     </script>
 </body>
 </html>
