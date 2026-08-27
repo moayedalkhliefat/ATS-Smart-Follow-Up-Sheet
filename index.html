@@ -620,78 +620,97 @@
             }
         }
 
-        // Ultra-Robust Excel / CSV Upload Parser (Handles multiple column name variations and raw array rows without mixing up names and IDs)
+        // Ultra-Robust Excel / CSV Upload Parser (Handles 4-column sheets, headers, serial numbers, and direct data rows instantly)
         function handleExcelUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = async function(e) {
+            reader.onload = function(e) {
                 try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
+                    let workbook;
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                    } catch (err1) {
+                        const dataStr = e.target.result;
+                        workbook = XLSX.read(dataStr, { type: 'binary', cellDates: true });
+                    }
+
+                    if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
+                        alert('Could not read the Excel file. Please ensure it is a valid .xlsx, .xls, or .csv file.');
+                        return;
+                    }
+
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
-                    const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
 
                     if (!jsonRows || jsonRows.length === 0) {
                         alert('The uploaded file appears to be empty.');
                         return;
                     }
 
-                    // Locate header row by checking for common column names
-                    let headerRowIdx = -1;
-                    let headers = [];
-                    
-                    for (let r = 0; r < Math.min(jsonRows.length, 10); r++) {
-                        const row = jsonRows[r];
-                        if (!row) continue;
-                        const rowStr = row.map(cell => cell ? cell.toString().toLowerCase() : '').join(' ');
-                        if (rowStr.includes('name') || rowStr.includes('student') || rowStr.includes('id') || rowStr.includes('grade') || rowStr.includes('section')) {
-                            headerRowIdx = r;
-                            headers = row.map(h => h ? h.toString().toLowerCase().trim() : '');
-                            break;
-                        }
-                    }
-
                     const ownerTag = (currentUser && currentUser.role === 'teacher') ? currentUser.username : 'admin';
                     let addedCount = 0;
 
-                    const startIndex = headerRowIdx !== -1 ? headerRowIdx + 1 : 0;
-
-                    for (let i = startIndex; i < jsonRows.length; i++) {
+                    for (let i = 0; i < jsonRows.length; i++) {
                         const row = jsonRows[i];
-                        if (!row || row.length === 0) continue;
+                        if (!row || !Array.isArray(row)) continue;
 
-                        const rowText = row.map(c => c ? c.toString().toLowerCase() : '').join(' ');
-                        if (rowText.includes('name') && rowText.includes('id')) continue;
+                        const cells = row.map(c => c !== undefined && c !== null ? c.toString().trim() : '').filter(c => c !== '');
+                        if (cells.length === 0) continue;
 
-                        const parsed = extractStudentDataFromRow(row, headers, i);
-                        if (!parsed || !parsed.name) continue;
-
-                        const studentData = {
-                            name: parsed.name,
-                            position: `${parsed.grade} | ${parsed.section}`,
-                            status: 'Enrolled',
-                            resume_url: parsed.studentId,
-                            notes: `${parsed.notes} | Date: ${parsed.date} | Teacher: ${ownerTag}`
-                        };
-
-                        if (supabaseClient) {
-                            try {
-                                await supabaseClient.from('candidates').insert([studentData]);
-                            } catch (err) {}
+                        const rowStr = cells.join(' ').toLowerCase();
+                        if (rowStr.includes('student name') || (rowStr.includes('name') && rowStr.includes('id')) || rowStr.includes('class &') || (rowStr.includes('name') && rowStr.includes('grade'))) {
+                            continue; // skip header row
                         }
 
-                        const existingStudent = students.find(s => s.studentId === parsed.studentId || s.name.toLowerCase() === parsed.name.toLowerCase());
+                        let name = '';
+                        let studentId = '';
+                        let grade = 'Grade 10';
+                        let section = 'Section A';
+                        let followDate = new Date().toISOString().slice(0, 10);
+                        let notes = 'Imported via Excel/CSV.';
+
+                        let dataCells = [...cells];
+                        if (dataCells.length > 0 && !isNaN(dataCells[0]) && parseInt(dataCells[0]) > 0 && parseInt(dataCells[0]) < 1000 && !dataCells[0].includes('-')) {
+                            dataCells.shift();
+                        }
+
+                        if (dataCells.length >= 1) name = dataCells[0];
+                        if (dataCells.length >= 2) studentId = dataCells[1];
+                        if (dataCells.length >= 3) grade = dataCells[2];
+                        if (dataCells.length >= 4) section = dataCells[3];
+
+                        if (!name || !isNaN(name) || name.length <= 1 || name.toLowerCase() === 'name' || name.toLowerCase() === 'student') {
+                            for (let c = 0; c < dataCells.length; c++) {
+                                const val = dataCells[c];
+                                if (val && isNaN(val) && val.length > 1 && !val.toLowerCase().includes('name') && !val.toLowerCase().includes('student') && !val.toLowerCase().includes('class') && !val.toLowerCase().includes('grade') && !val.toUpperCase().includes('AQB')) {
+                                    name = val;
+                                    if (c + 1 < dataCells.length) studentId = dataCells[c + 1];
+                                    if (c + 2 < dataCells.length) grade = dataCells[c + 2];
+                                    if (c + 3 < dataCells.length) section = dataCells[c + 3];
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!name || !isNaN(name)) continue;
+
+                        if (!studentId || studentId === name || studentId.toUpperCase().includes('NAME')) {
+                            studentId = `AQB-${Date.now()}-${i}`;
+                        }
+
+                        const existingStudent = students.find(s => s.studentId === studentId || s.name.toLowerCase() === name.toLowerCase());
                         let studentLogs = existingStudent && existingStudent.logs ? [...existingStudent.logs] : [];
-                        const existingLogIdx = studentLogs.findIndex(l => l.date === parsed.date);
+                        const existingLogIdx = studentLogs.findIndex(l => l.date === followDate);
                         if (existingLogIdx !== -1) {
-                            studentLogs[existingLogIdx].notes = parsed.notes;
+                            studentLogs[existingLogIdx].notes = notes;
                         } else {
                             studentLogs.push({
-                                date: parsed.date,
-                                notes: parsed.notes,
+                                date: followDate,
+                                notes: notes,
                                 teacher: ownerTag,
                                 created_at: new Date().toISOString()
                             });
@@ -700,28 +719,42 @@
 
                         const newStuObj = {
                             id: existingStudent ? existingStudent.id : ('local-' + Date.now() + '-' + i),
-                            name: parsed.name,
-                            studentId: parsed.studentId,
-                            grade: parsed.grade,
-                            section: parsed.section,
-                            date: parsed.date,
-                            notes: parsed.notes,
+                            name: name,
+                            studentId: studentId,
+                            grade: grade || 'Grade 10',
+                            section: section || 'Section A',
+                            date: followDate,
+                            notes: notes,
                             logs: studentLogs,
                             teacher: ownerTag,
                             created_at: existingStudent ? existingStudent.created_at : new Date().toISOString()
                         };
 
-                        const existingIdx = students.findIndex(s => s.studentId === parsed.studentId || s.name.toLowerCase() === parsed.name.toLowerCase());
+                        const existingIdx = students.findIndex(s => s.studentId === studentId || s.name.toLowerCase() === name.toLowerCase());
                         if (existingIdx !== -1) {
                             students[existingIdx] = { ...students[existingIdx], ...newStuObj };
                         } else {
                             students.unshift(newStuObj);
                         }
                         addedCount++;
+
+                        if (supabaseClient) {
+                            supabaseClient.from('candidates').insert([{
+                                name: name,
+                                position: `${grade || 'Grade 10'} | ${section || 'Section A'}`,
+                                status: 'Enrolled',
+                                resume_url: studentId,
+                                notes: `${notes} | Date: ${followDate} | Teacher: ${ownerTag}`
+                            }]).then(() => {}).catch(() => {});
+                        }
+                    }
+
+                    if (addedCount === 0) {
+                        alert('No valid student rows found in the uploaded file. Please make sure your file contains student names.');
+                        return;
                     }
 
                     saveToLocalStorage();
-                    await loadStudents();
 
                     if (document.getElementById('gradeFilter')) document.getElementById('gradeFilter').value = '';
                     if (document.getElementById('sectionFilter')) document.getElementById('sectionFilter').value = '';
@@ -733,6 +766,15 @@
                     updateStats();
 
                     alert(`Successfully imported ${addedCount} student record(s) from Excel/CSV file!`);
+                } catch (err) {
+                    console.error('Excel parse error:', err);
+                    alert('Error parsing Excel/CSV file: ' + err.message);
+                } finally {
+                    event.target.value = '';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
                 } catch (err) {
                     console.error('Excel parse error:', err);
                     alert('Error parsing Excel/CSV file: ' + err.message);
