@@ -1103,24 +1103,6 @@
             renderStudents();
         }
 
-        function togglePosNegMark(studentIdKey, catId) {
-            if (!studentMarks[studentIdKey]) {
-                studentMarks[studentIdKey] = {};
-            }
-            const current = studentMarks[studentIdKey][catId];
-            let nextVal = 'Positive';
-            if (current === 'Positive') {
-                nextVal = 'Negative';
-            } else if (current === 'Negative') {
-                nextVal = 'Positive';
-            } else {
-                nextVal = 'Positive';
-            }
-            studentMarks[studentIdKey][catId] = nextVal;
-            saveMarksToStorage();
-            renderStudents();
-        }
-
         function getColorClasses(color) {
             switch(color) {
                 case 'pink': return { border: 'border-pink-200', bg: 'bg-pink-50/40', dot: 'bg-pink-500', accent: 'accent-pink-600', text: 'text-pink-800' };
@@ -1719,17 +1701,16 @@
                                             </div>
                                         `;
                                     } else if (cat.type === 'pos_neg') {
-                                        const currentVal = marks[cat.id] || 'Positive';
-                                        const isPositive = currentVal === 'Positive' || currentVal === true;
+                                        const currentVal = (marks[cat.id] !== undefined && marks[cat.id] !== '') ? marks[cat.id] : '';
                                         return `
                                             <div class="${cols.bg} p-3 rounded-xl border ${cols.border} flex items-center justify-between gap-3">
                                                 <div class="min-w-0 flex items-center space-x-2">
                                                     <span class="w-2.5 h-2.5 rounded-full ${cols.dot} flex-shrink-0"></span>
-                                                    <span class="text-xs font-bold text-slate-800 truncate">${escapeHtml(cat.name)}</span>
+                                                    <span class="text-xs font-bold text-slate-800 truncate" title="${escapeHtml(cat.name)}">${escapeHtml(cat.name)}</span>
                                                 </div>
-                                                <button onclick="togglePosNegMark('${s.studentId}', '${cat.id}')" class="px-3 py-1.5 text-xs font-black rounded-lg transition shadow-sm ${isPositive ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'}">
-                                                    ${isPositive ? 'Positive' : 'Negative'}
-                                                </button>
+                                                <div class="flex items-center space-x-1 w-32 flex-shrink-0">
+                                                    <input type="number" step="any" value="${currentVal}" onchange="updateMark('${s.studentId}', '${cat.id}', this.value)" placeholder="e.g. +5 or -3" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs font-bold text-center bg-white focus:ring-2 focus:ring-fuchsia-500 focus:outline-none">
+                                                </div>
                                             </div>
                                         `;
                                     } else {
