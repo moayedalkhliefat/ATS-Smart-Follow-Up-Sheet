@@ -88,7 +88,7 @@
                         <span>ATS-AQB Student Follow-Up</span>
                         <span id="navRoleBadge" class="text-xs px-2.5 py-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full font-bold shadow-sm">Science Dept</span>
                     </h1>
-                    <p class="text-xs text-slate-500 font-medium">Builder & Science Teacher: <span class="font-bold text-fuchsia-700">Mr. Moayed Alkhliefat</span></p>
+                    <p class="text-xs text-slate-500 font-medium">Builder By Science Teacher: <span class="font-bold text-fuchsia-700">Mr. Moayed Alkhliefat</span></p>
                 </div>
             </div>
 
@@ -117,11 +117,15 @@
 
         <!-- STUDENTS VIEW -->
         <div id="studentsView" class="space-y-8">
-            <!-- Dashboard Stats Card (Total Students) -->
-            <div class="max-w-xs">
+            <!-- Dashboard Stats & Teacher Info Boxes -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl">
                 <div class="bg-white/95 backdrop-blur-md p-5 rounded-2xl border border-purple-100 shadow-sm hover:shadow-md transition">
                     <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Students</p>
                     <p id="statTotal" class="text-3xl font-black text-slate-900 mt-1">0</p>
+                </div>
+                <div class="bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 p-5 rounded-2xl text-white shadow-sm hover:shadow-md transition flex flex-col justify-center">
+                    <p class="text-xs font-bold text-purple-200 uppercase tracking-wider">Teacher Information</p>
+                    <p id="teacherInfoBox" class="text-sm font-black mt-1">Mr. Moayed Alkhliefat (Science Teacher)</p>
                 </div>
             </div>
 
@@ -495,6 +499,7 @@
             const badge = document.getElementById('currentUserBadge');
             const tabTeachersBtn = document.getElementById('tabTeachersBtn');
             const roleBadge = document.getElementById('navRoleBadge');
+            const teacherInfoBox = document.getElementById('teacherInfoBox');
 
             const isAdmin = currentUser.role === 'admin' && currentUser.username === 'moayed alkhliefat';
 
@@ -502,11 +507,13 @@
                 currentUser.role = 'admin';
                 badge.textContent = 'Admin: Mr. Moayed';
                 roleBadge.textContent = 'Admin View (All)';
+                if (teacherInfoBox) teacherInfoBox.textContent = 'Mr. Moayed Alkhliefat (Admin & Science Teacher)';
                 if (tabTeachersBtn) tabTeachersBtn.classList.remove('hidden');
             } else {
                 currentUser.role = 'teacher';
                 badge.textContent = `Teacher: ${currentUser.name}`;
                 roleBadge.textContent = `${currentUser.subject || 'Teacher'} Dept`;
+                if (teacherInfoBox) teacherInfoBox.textContent = `${currentUser.name} (${currentUser.subject || 'Teacher'})`;
                 if (tabTeachersBtn) tabTeachersBtn.classList.add('hidden');
                 switchTab('students');
             }
