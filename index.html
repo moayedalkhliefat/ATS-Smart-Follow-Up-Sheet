@@ -775,14 +775,6 @@
             };
             reader.readAsArrayBuffer(file);
         }
-                } catch (err) {
-                    console.error('Excel parse error:', err);
-                    alert('Error parsing Excel/CSV file: ' + err.message);
-                } finally {
-                    event.target.value = '';
-                }
-            };
-            reader.readAsArrayBuffer(file);
         }
 
         function extractStudentDataFromRow(row, headers, rowIndex) {
