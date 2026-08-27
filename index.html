@@ -733,25 +733,23 @@
             let notes = 'Imported via Excel/CSV.';
 
             if (headers && headers.length > 0) {
-                let nameIdx = headers.findIndex(h => h.includes('name') || h.includes('student') || h.includes('full') || h.includes('pupil'));
-                let idIdx = headers.findIndex(h => h.includes('id') || h.includes('number') || h.includes('no') || h.includes('code') || h.includes('admission'));
-                let gradeIdx = headers.findIndex(h => h.includes('grade') || h.includes('class') || h.includes('level') || h.includes('year'));
-                let sectionIdx = headers.findIndex(h => h.includes('section') || h.includes('group') || h.includes('div'));
+                let nameIdx = headers.findIndex(h => h === 'student name' || h.includes('student name') || h.includes('full name') || h.includes('name') || h.includes('student'));
+                let idIdx = headers.findIndex(h => h === 'student id' || h.includes('student id') || h.includes('id') || h.includes('number') || h.includes('no') || h.includes('code'));
+                let gradeIdx = headers.findIndex(h => h === 'class' || h.includes('class') || h.includes('grade') || h.includes('level') || h.includes('year'));
+                let sectionIdx = headers.findIndex(h => h === 'section' || h.includes('section') || h.includes('group') || h.includes('div'));
                 let dateIdx = headers.findIndex(h => h.includes('date') || h.includes('time') || h.includes('day'));
                 let notesIdx = headers.findIndex(h => h.includes('note') || h.includes('remark') || h.includes('comment'));
 
-                if (nameIdx !== -1 && row[nameIdx] !== undefined && row[nameIdx] !== null) {
-                    name = row[nameIdx].toString().trim();
-                }
-                if (idIdx !== -1 && row[idIdx] !== undefined && row[idIdx] !== null) {
-                    studentId = row[idIdx].toString().trim();
-                }
-                if (gradeIdx !== -1 && row[gradeIdx] !== undefined && row[gradeIdx] !== null) {
-                    grade = row[gradeIdx].toString().trim();
-                }
-                if (sectionIdx !== -1 && row[sectionIdx] !== undefined && row[sectionIdx] !== null) {
-                    section = row[sectionIdx].toString().trim();
-                }
+                if (nameIdx === -1) nameIdx = 0;
+                if (idIdx === -1) idIdx = 1;
+                if (gradeIdx === -1) gradeIdx = 2;
+                if (sectionIdx === -1) sectionIdx = 3;
+
+                if (row[nameIdx] !== undefined && row[nameIdx] !== null) name = row[nameIdx].toString().trim();
+                if (row[idIdx] !== undefined && row[idIdx] !== null) studentId = row[idIdx].toString().trim();
+                if (row[gradeIdx] !== undefined && row[gradeIdx] !== null) grade = row[gradeIdx].toString().trim();
+                if (row[sectionIdx] !== undefined && row[sectionIdx] !== null) section = row[sectionIdx].toString().trim();
+
                 if (dateIdx !== -1 && row[dateIdx]) {
                     const rawDate = row[dateIdx];
                     if (typeof rawDate === 'number') {
@@ -766,6 +764,11 @@
                 if (notesIdx !== -1 && row[notesIdx]) {
                     notes = row[notesIdx].toString().trim();
                 }
+            } else {
+                if (row[0] !== undefined && row[0] !== null) name = row[0].toString().trim();
+                if (row[1] !== undefined && row[1] !== null) studentId = row[1].toString().trim();
+                if (row[2] !== undefined && row[2] !== null) grade = row[2].toString().trim();
+                if (row[3] !== undefined && row[3] !== null) section = row[3].toString().trim();
             }
 
             // Intelligent cell scanning to find real name if name is empty, numeric, or invalid
